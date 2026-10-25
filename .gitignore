@@ -1,0 +1,9 @@
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+
+# Lokale innstillinger
+.claude/
+.vscode/
+node_modules/

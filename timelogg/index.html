@@ -1,0 +1,1206 @@
+<!doctype html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#C8102E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Timelogg">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>Timelogg</title>
+<style>
+  /* UiAs grafiske profil (uia.no/om-uia/designmanual): farger fra fargepaletten, Acumin med Helvetica Neue/Arial som reserve, ingen versaler */
+  :root {
+    --red: #C8102E;
+    --red-dark: #78111F;
+    --red-muted: #F5E1E2;
+    --warm: #ECE0D2;
+    --bg: #FAF6F1;
+    --card: #FFFFFF;
+    --text: #131E29;
+    --sub: #5B6672;
+    --line: #E8DFD4;
+    --green: #03591D;
+    --on-red: #FFFFFF;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --red: #D03E54;
+      --red-dark: #E4939F;
+      --red-muted: #3A1A22;
+      --warm: #2A3542;
+      --bg: #131E29;
+      --card: #1C2935;
+      --text: #F5EFE7;
+      --sub: #A5AEB8;
+      --line: #2C3946;
+      --green: #7FC48F;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --red: #D03E54; --red-dark: #E4939F; --red-muted: #3A1A22; --warm: #2A3542;
+    --bg: #131E29; --card: #1C2935; --text: #F5EFE7; --sub: #A5AEB8; --line: #2C3946;
+    --green: #7FC48F; color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.4 "acumin-pro", "Acumin Pro", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior-y: none;
+  }
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; border: 0; background: none; }
+
+  header {
+    background: var(--red);
+    color: var(--on-red);
+    padding: calc(env(safe-area-inset-top) + 14px) 20px 14px;
+    position: sticky; top: 0; z-index: 5;
+  }
+  header h1 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
+
+  main { padding: 16px 16px calc(env(safe-area-inset-bottom) + 96px); max-width: 560px; margin: 0 auto; }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ---------- Timer ---------- */
+  .clock {
+    background: var(--card);
+    border-radius: 24px;
+    padding: 32px 20px 24px;
+    text-align: center;
+    border: 1px solid var(--line);
+  }
+  .clock .status { color: var(--sub); font-size: 15px; min-height: 22px; }
+  .clock .status button { color: var(--red); text-decoration: underline; text-underline-offset: 3px; padding: 4px; }
+  .clock .time {
+    font-size: 64px; font-weight: 700; letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums; margin: 8px 0 24px;
+  }
+  .clock.running .time { color: var(--red); }
+  .big {
+    width: 100%; height: 64px; border-radius: 32px;
+    background: var(--red); color: var(--on-red);
+    font-size: 20px; font-weight: 700; letter-spacing: 0.02em;
+    transition: transform .1s, background .2s;
+  }
+  .big:active { transform: scale(.97); }
+  .clock.running .big { background: var(--text); color: var(--bg); }
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px; }
+  .stat .lbl { font-size: 13px; color: var(--sub); }
+  .stat .val { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 2px; }
+
+  .quick { margin-top: 18px; }
+  .quick h2 { font-size: 13px; font-weight: 600; color: var(--sub); margin: 0 4px 6px; }
+  .quick .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .quick button {
+    background: var(--red-muted); border: 1px solid var(--line); border-radius: 16px;
+    padding: 14px 12px; text-align: left; transition: transform .1s;
+  }
+  .quick button:active { transform: scale(.97); }
+  .quick b { display: block; font-size: 18px; color: var(--red); }
+  .quick small { color: var(--sub); font-size: 13px; font-variant-numeric: tabular-nums; }
+
+  .ghost {
+    display: block; width: 100%; margin-top: 10px; padding: 14px;
+    border-radius: 16px; border: 1.5px dashed var(--line); color: var(--sub); font-weight: 600;
+  }
+
+  /* ---------- Logg ---------- */
+  .monthbar {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 8px;
+  }
+  .monthbar button { width: 44px; height: 44px; border-radius: 22px; font-size: 22px; color: var(--red); }
+  .monthbar button:disabled { opacity: .25; }
+  .monthbar .mid { text-align: center; }
+  .monthbar .name { font-weight: 700; text-transform: capitalize; }
+  .monthbar .sum { font-size: 28px; font-weight: 700; color: var(--red); font-variant-numeric: tabular-nums; line-height: 1.2; }
+  .monthbar .sum2 { font-size: 13px; color: var(--sub); }
+
+  .seg { display: flex; background: var(--warm); border-radius: 12px; padding: 3px; margin-top: 12px; }
+  .seg button { flex: 1; padding: 8px; border-radius: 9px; font-weight: 600; font-size: 15px; color: var(--sub); }
+  .seg button.active { background: var(--card); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+
+  .cal { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 10px 8px; margin-top: 12px; }
+  .cal .wd, .cal .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .cal .wd span { text-align: center; font-size: 12px; color: var(--sub); padding-bottom: 6px; }
+  .cal .grid button {
+    aspect-ratio: 1 / 1.15; border-radius: 10px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 1px; min-width: 0;
+  }
+  .cal .grid b { font-size: 15px; font-weight: 600; }
+  .cal .grid small { font-size: 12px; font-weight: 700; color: var(--red); font-variant-numeric: tabular-nums; min-height: 15px; }
+  .cal .grid .has { background: var(--red-muted); }
+  .cal .grid .future b { color: var(--sub); opacity: .6; }
+  .cal .grid .today b { color: var(--red); text-decoration: underline; text-underline-offset: 3px; }
+  .cal .grid .sel { outline: 2px solid var(--red); outline-offset: -2px; }
+
+  .day { margin-top: 18px; }
+  .dayhead {
+    display: flex; justify-content: space-between; font-size: 13px; font-weight: 600;
+    color: var(--sub); padding: 0 4px 6px;
+  }
+  .entries { background: var(--card); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+  .entry {
+    display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+    padding: 14px 16px; border-top: 1px solid var(--line);
+  }
+  .entry:first-child { border-top: 0; }
+  .entry:active { background: var(--red-muted); }
+  .entry .span { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .entry .note { font-size: 14px; color: var(--sub); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .entry .grow { flex: 1; min-width: 0; }
+  .entry .dur { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .entry.live .dur { color: var(--red); }
+  .entry .chev { color: var(--sub); }
+
+  .empty { text-align: center; color: var(--sub); padding: 48px 20px; }
+
+  /* ---------- Måneder ---------- */
+  .yearhead { font-size: 13px; font-weight: 600; color: var(--sub); margin: 20px 4px 6px; display: flex; justify-content: space-between; }
+  .yearhead:first-child { margin-top: 4px; }
+  .mrow { display: block; width: 100%; text-align: left; padding: 14px 16px; border-top: 1px solid var(--line); }
+  .mrow:first-child { border-top: 0; }
+  .mrow:active { background: var(--red-muted); }
+  .mrow .top { display: flex; justify-content: space-between; align-items: baseline; }
+  .mrow .mn { font-weight: 600; text-transform: capitalize; }
+  .mrow .mh { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .mrow .bar { height: 6px; border-radius: 3px; background: var(--warm); margin-top: 8px; overflow: hidden; }
+  .mrow .bar i { display: block; height: 100%; background: var(--red); border-radius: 3px; }
+  .mrow .meta { font-size: 13px; color: var(--sub); margin-top: 4px; }
+
+  .tools { margin-top: 28px; }
+  .tools h2 { font-size: 13px; color: var(--sub); margin: 0 4px 6px; }
+  .tools .entries button { display: block; width: 100%; text-align: left; padding: 14px 16px; border-top: 1px solid var(--line); }
+  .tools .entries button:first-child { border-top: 0; }
+  .tools .danger { color: var(--red); }
+
+  /* ---------- Bunnmeny ---------- */
+  nav {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
+    display: flex; background: var(--card); border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  nav button {
+    flex: 1; padding: 10px 0 8px; font-size: 12px; font-weight: 600; color: var(--sub);
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+  }
+  nav button svg { width: 24px; height: 24px; }
+  nav button.active { color: var(--red); }
+
+  .fab {
+    position: fixed; right: 20px; bottom: calc(env(safe-area-inset-bottom) + 76px); z-index: 6;
+    width: 56px; height: 56px; border-radius: 28px; background: var(--red); color: var(--on-red);
+    font-size: 30px; line-height: 1; box-shadow: 0 6px 18px rgba(0,0,0,.2); display: none;
+  }
+  body[data-view="log"] .fab { display: block; }
+
+  /* ---------- Redigeringsark ---------- */
+  dialog {
+    border: 0; padding: 0; margin: auto 0 0; width: 100%; max-width: 100%;
+    background: var(--card); color: var(--text);
+    border-radius: 24px 24px 0 0;
+  }
+  @media (min-width: 600px) { dialog { margin: auto; max-width: 480px; border-radius: 24px; } }
+  dialog::backdrop { background: rgba(19,30,41,.5); }
+  .sheet { padding: 20px 20px calc(env(safe-area-inset-bottom) + 20px); }
+  .sheet h2 { margin: 0 0 16px; font-size: 20px; }
+  .field { display: block; margin-bottom: 12px; }
+  .field span { display: block; font-size: 13px; font-weight: 600; color: var(--sub); margin-bottom: 4px; }
+  .field input {
+    width: 100%; height: 48px; padding: 0 14px; border-radius: 12px;
+    border: 1px solid var(--line); background: var(--bg); font-size: 17px;
+    -webkit-appearance: none; appearance: none;
+  }
+  .field input:focus { outline: 2px solid var(--red); outline-offset: -1px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .preview { text-align: center; color: var(--sub); margin: 4px 0 16px; font-variant-numeric: tabular-nums; }
+  .preview b { color: var(--text); }
+  .preview.err { color: var(--red); }
+  .actions { display: flex; gap: 10px; }
+  .actions button { flex: 1; height: 50px; border-radius: 25px; font-weight: 700; }
+  .btn-save { background: var(--red); color: var(--on-red); }
+  .btn-cancel { background: var(--warm); }
+  .btn-del { display: block; width: 100%; margin-top: 12px; padding: 10px; color: var(--red); font-weight: 600; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 84px); transform: translateX(-50%) translateY(20px);
+    background: var(--text); color: var(--bg); padding: 10px 18px; border-radius: 20px; font-size: 15px;
+    opacity: 0; transition: .25s; pointer-events: none; z-index: 20; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+  .toast button { color: var(--red-muted); font-weight: 700; margin-left: 14px; padding: 4px 0; text-decoration: underline; text-underline-offset: 3px; }
+
+  /* ---------- Skylagring ---------- */
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .cloud {
+    color: var(--on-red); font-size: 13px; font-weight: 600; padding: 5px 12px;
+    border-radius: 14px; background: rgba(255,255,255,.18); white-space: nowrap;
+  }
+  .cloud.err { background: #fff; color: #C8102E; }
+  .account { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+  .account p { margin: 0 0 12px; color: var(--sub); font-size: 15px; }
+  .account p b { color: var(--text); }
+  .account p:last-child { margin-bottom: 0; }
+  .gbtn {
+    display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 48px;
+    border-radius: 24px; border: 1px solid var(--line); background: var(--bg); font-weight: 600;
+  }
+  .gbtn svg { width: 20px; height: 20px; }
+  .linkbtn { color: var(--red); font-weight: 600; padding: 4px 0; }
+
+  /* ---------- Overtid ---------- */
+  .bank { background: var(--red); color: var(--on-red); border-radius: 24px; padding: 22px 20px; text-align: center; }
+  .bank .lbl { font-size: 15px; opacity: .9; }
+  .bank .num { font-size: 42px; font-weight: 700; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1.1; margin: 4px 0; }
+  .bank .sub { font-size: 14px; opacity: .9; font-variant-numeric: tabular-nums; }
+  .bank button { color: var(--on-red); margin-top: 12px; font-size: 14px; font-weight: 600; padding: 6px 14px; border-radius: 14px; background: rgba(255,255,255,.18); }
+  .hint { color: var(--sub); font-size: 14px; margin: 12px 4px 0; }
+  #ot-list .yearhead:first-child { margin-top: 20px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+  .chips span { font-size: 12px; background: var(--ot-bg); color: var(--ot); padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+  .tag { font-size: 11px; font-weight: 700; background: var(--ot-bg); color: var(--ot); padding: 1px 7px; border-radius: 8px; margin-left: 6px; }
+  .cal .grid .has.ot { background: var(--ot-bg); }
+  .cal .grid .has.ot small { color: var(--ot); }
+  .dayquick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  .dayquick button { background: var(--red-muted); border: 1px solid var(--line); border-radius: 14px; padding: 10px; font-weight: 600; font-size: 14px; color: var(--red); }
+  :root { --ot: #03591D; --ot-bg: #E6F0E5; --abs: #131E29; --abs-bg: #E1EDF9; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --ot: #9FD3A8; --ot-bg: #1E3A27; --abs: #C9DDF2; --abs-bg: #233447; } }
+  :root[data-theme="dark"] { --ot: #9FD3A8; --ot-bg: #1E3A27; --abs: #C9DDF2; --abs-bg: #233447; }
+
+  /* ---------- Koder ---------- */
+  .code { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 8px; margin-left: 6px; vertical-align: 1px; }
+  .code.plus { background: var(--ot-bg); color: var(--ot); }
+  .code.minus { background: var(--red-muted); color: var(--red); }
+  .code.abs { background: var(--abs-bg); color: var(--abs); }
+  .cal .grid button { aspect-ratio: 1 / 1.7; }
+  .cal .grid small { font-size: 11px; line-height: 13px; text-align: center; }
+  .cal .grid i { font-style: normal; font-size: 10px; font-weight: 700; min-height: 13px; line-height: 13px; }
+  .cal .grid .k-plus { background: var(--ot-bg); }
+  .cal .grid .k-plus small, .cal .grid .k-plus i { color: var(--ot); }
+  .cal .grid .k-minus { background: var(--red-muted); }
+  .cal .grid .k-minus i { color: var(--red); }
+  .cal .grid .k-abs { background: var(--abs-bg); }
+  .cal .grid .k-abs i, .cal .grid .k-abs small { color: var(--abs); }
+  .delta { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .delta.pos { color: var(--ot); }
+  .delta.neg { color: var(--red); }
+  .chips span.minus { background: var(--red-muted); color: var(--red); }
+  .chips span.abs { background: var(--abs-bg); color: var(--abs); }
+  .quick .grid.four button b { font-size: 16px; }
+  .quick button.q-plus { background: var(--ot-bg); } .quick button.q-plus b { color: var(--ot); }
+  .quick button.q-abs { background: var(--abs-bg); } .quick button.q-abs b { color: var(--abs); }
+  .dayquick { grid-template-columns: 1fr 1fr; }
+  .dayquick button.q-plus { background: var(--ot-bg); color: var(--ot); }
+  .dayquick button.q-abs { background: var(--abs-bg); color: var(--abs); }
+  .field select {
+    width: 100%; height: 48px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--bg); font-size: 17px; color: var(--text); -webkit-appearance: none; appearance: none;
+  }
+  .codes-help { margin-top: 28px; }
+  .codes-help .entries > div { padding: 10px 16px; border-top: 1px solid var(--line); font-size: 14px; display: flex; gap: 10px; align-items: baseline; }
+  .codes-help .entries > div:first-child { border-top: 0; }
+  .codes-help .code { margin: 0; min-width: 30px; text-align: center; }
+  .absrow { display: flex; justify-content: space-between; padding: 12px 16px; border-top: 1px solid var(--line); }
+  .absrow:first-child { border-top: 0; }
+</style>
+</head>
+<body data-view="timer">
+
+<header><h1 id="title">Timer</h1><button class="cloud" id="cloud" hidden></button></header>
+
+<main>
+  <!-- TIMER -->
+  <section class="view active" id="view-timer">
+    <div class="clock" id="clock">
+      <div class="status" id="status">Klar til å starte</div>
+      <div class="time" id="time">0:00:00</div>
+      <button class="big" id="toggle">Start</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="lbl">I dag</div><div class="val" id="s-day">0:00</div></div>
+      <div class="stat"><div class="lbl">Denne uka</div><div class="val" id="s-week">0:00</div></div>
+      <div class="stat"><div class="lbl">Overtidsbank</div><div class="val" id="s-bank">0:00</div></div>
+    </div>
+    <div class="quick">
+      <h2>Hurtigregistrering i dag</h2>
+      <div class="grid four" id="quick-today"></div>
+    </div>
+    <button class="ghost" id="add-manual">+ Legg inn timer manuelt</button>
+  </section>
+
+  <!-- LOGG -->
+  <section class="view" id="view-log">
+    <div class="monthbar">
+      <button id="prev" aria-label="Forrige måned">‹</button>
+      <div class="mid">
+        <div class="name" id="m-name"></div>
+        <div class="sum" id="m-sum"></div>
+        <div class="sum2" id="m-sum2"></div>
+      </div>
+      <button id="next" aria-label="Neste måned">›</button>
+    </div>
+    <div class="seg">
+      <button data-mode="list">Liste</button>
+      <button data-mode="cal">Kalender</button>
+    </div>
+    <div id="log-list"></div>
+  </section>
+
+  <!-- OVERTID -->
+  <section class="view" id="view-ot">
+    <div class="bank">
+      <div class="lbl">Overtidsbank</div>
+      <div class="num" id="ot-bank">0:00</div>
+      <div class="sub" id="ot-bank-sub"></div>
+      <button id="ot-start">Endre inngående saldo</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="lbl">Overtidsdager</div><div class="val" id="ot-days">0</div></div>
+      <div class="stat"><div class="lbl">Avspasert</div><div class="val" id="ot-a">0</div></div>
+      <div class="stat"><div class="lbl">Egenmeldt i år</div><div class="val" id="ot-s">0</div></div>
+    </div>
+    <div id="ot-list"></div>
+    <div class="tools" id="abs-box"></div>
+    <div class="tools codes-help">
+      <h2>Slik regnes banken (som i arbeidstidsskjemaet)</h2>
+      <div class="entries" id="codes-help"></div>
+    </div>
+  </section>
+
+  <!-- MÅNEDER -->
+  <section class="view" id="view-months">
+    <div id="month-list"></div>
+    <div class="tools">
+      <h2>Konto og skylagring</h2>
+      <div class="account" id="account"></div>
+    </div>
+    <div class="tools">
+      <h2>Data</h2>
+      <div class="entries">
+        <button id="export-csv">Eksporter til regneark (CSV)</button>
+        <button id="export-json">Ta sikkerhetskopi til fil</button>
+        <button id="import-json">Importer fra fil</button>
+      </div>
+      <input type="file" id="import-file" accept="application/json,.json" hidden>
+    </div>
+  </section>
+</main>
+
+<button class="fab" id="fab" aria-label="Legg til">+</button>
+
+<nav>
+  <button data-go="timer" class="active">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9.5 2h5"/></svg>
+    Timer
+  </button>
+  <button data-go="log">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>
+    Logg
+  </button>
+  <button data-go="ot">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>
+    Overtid
+  </button>
+  <button data-go="months">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+    Måneder
+  </button>
+</nav>
+
+<dialog id="sheet">
+  <form class="sheet" id="form" method="dialog">
+    <h2 id="sheet-title">Ny økt</h2>
+    <label class="field"><span>Dato</span><input type="date" id="f-date" required></label>
+    <label class="field" id="code-wrap"><span>Kode</span><select id="f-code"></select></label>
+    <div class="row2">
+      <label class="field"><span>Start</span><input type="time" id="f-start"></label>
+      <label class="field" id="end-wrap"><span>Slutt</span><input type="time" id="f-end"></label>
+    </div>
+    <label class="field"><span>Notat (valgfritt)</span><input type="text" id="f-note" placeholder="F.eks. prosjekt eller kunde" maxlength="120"></label>
+    <div class="preview" id="preview"></div>
+    <div class="actions">
+      <button type="button" class="btn-cancel" id="cancel">Avbryt</button>
+      <button type="submit" class="btn-save">Lagre</button>
+    </div>
+    <button type="button" class="btn-del" id="delete">Slett økt</button>
+  </form>
+</dialog>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { FIREBASE_CONFIG } from './firebase-config.js';
+
+const KEY = 'timelogg.v1';
+const H = 3600000, DAY = 24 * H;
+// Inngående overtidssaldo i minutter. 0, fordi de tidligere timene under til sammen gir 21:24, som i arket.
+const DEFAULT_BANK = 0;
+
+// Tidligere timer fra «2026 Arbeidstidsskjema»: [dato, fra, til, kode]. Uten klokkeslett = hele dagen.
+const HISTORY = [
+  ['2026-08-24', '08:00', '13:30', ''],
+  ['2026-08-25', '08:00', '13:30', ''],
+  ['2026-08-26', '08:00', '13:30', ''],
+  ['2026-08-27', '08:00', '13:30', ''],
+  ['2026-08-31', '08:00', '13:30', ''],
+  ['2026-09-01', '08:00', '13:30', ''],
+  ['2026-09-02', '08:00', '13:30', ''],
+  ['2026-09-03', '08:00', '13:30', ''],
+  ['2026-09-07', '08:00', '16:00', ''],
+  ['2026-09-08', '08:00', '16:00', ''],
+  ['2026-09-09', '08:00', '16:00', ''],
+  ['2026-09-10', '08:00', '16:00', ''],
+  ['2026-09-14', '08:00', '14:30', ''],
+  ['2026-09-15', '08:00', '14:30', ''],
+  ['2026-09-16', '08:00', '14:30', ''],
+  ['2026-09-17', '08:00', '14:30', ''],
+  ['2026-09-21', '08:00', '14:30', ''],
+  ['2026-09-22', '08:00', '14:30', ''],
+  ['2026-09-23', '08:00', '14:30', ''],
+  ['2026-09-24', '08:00', '14:30', ''],
+  ['2026-09-26', '18:22', '21:50', 'X'],
+  ['2026-10-05', '08:00', '13:10', ''],
+  ['2026-10-06', '09:14', '16:05', ''],
+  ['2026-10-07', '08:00', '14:30', ''],
+  ['2026-10-08', '08:00', '14:30', ''],
+  ['2026-10-12', '08:00', '14:30', ''],
+  ['2026-10-13', '08:00', '12:50', ''],
+  ['2026-10-14', '08:00', '12:50', ''],
+  ['2026-10-15', '', '', 'S'],
+  ['2026-10-16', '', '', 'S'],
+  ['2026-10-19', '08:00', '14:50', ''],
+  ['2026-10-20', '08:00', '14:20', ''],
+  ['2026-10-21', '08:00', '14:20', ''],
+  ['2026-10-22', '08:00', '13:45', ''],
+  ['2026-10-23', '08:00', '18:00', 'XR'],
+  ['2026-10-24', '08:00', '18:00', 'XR']
+];
+const $ = id => document.getElementById(id);
+const now = () => Date.now();
+
+// ---------- Koder (fra arbeidstidsskjemaet) ----------
+// kind: plus = gir pluss-tid, minus = trekkes fra banken, abs = fravær (påvirker ikke banken)
+const CODES = {
+  X:  { label: 'Ekstra – ikke arbeidsdag / helligdag', kind: 'plus', help: 'Alle timene gir pluss-tid. Settes automatisk på lørdag og søndag.' },
+  XR: { label: 'Helg – fast 10 timer', kind: 'plus', help: 'Gir alltid 10 timer i pluss.' },
+  A:  { label: 'Avspasering', kind: 'minus', help: 'Trekker en normal arbeidsdag fra banken.' },
+  S:  { label: 'Syk – egenmelding', kind: 'abs', help: 'Fravær. Påvirker ikke banken.' },
+  SM: { label: 'Syk – sykemelding', kind: 'abs', help: 'Fravær. Påvirker ikke banken.' },
+  SB: { label: 'Sykt barn', kind: 'abs', help: 'Fravær. Påvirker ikke banken.' },
+  F:  { label: 'Ferie', kind: 'abs', help: 'Fravær. Påvirker ikke banken.' },
+  K:  { label: 'Kurs', kind: 'abs', help: 'Påvirker ikke banken.' },
+  V:  { label: 'Velferdspermisjon', kind: 'abs', help: 'Fravær. Påvirker ikke banken.' },
+  P:  { label: 'Permisjon', kind: 'abs', help: 'Fravær. Påvirker ikke banken.' },
+  D:  { label: 'Annet', kind: 'abs', help: 'Påvirker ikke banken.' }
+};
+const XR_HOURS = 10 * H;
+// Normal arbeidsdag: 6:30 (1. september – 30. april), 5:30 (1. mai – 31. august)
+const normalDay = k => { const m = +k.slice(5, 7); return (m >= 5 && m <= 8 ? 5.5 : 6.5) * H; };
+// Klokka 08:00 på en dato (riktig også på dager med overgang sommertid/vintertid)
+// Vanlig arbeidsdag registreres 10 minutter kortere enn normaldagen (08:00–14:20), og gir dermed −0:10 i banken
+const workDay = k => normalDay(k) - 10 * 60000;
+const at8 = k => { const d = new Date(k + 'T00:00'); d.setHours(8, 0, 0, 0); return d.getTime(); };
+
+// ---------- Lagring ----------
+// Alt lagres lokalt først. Er du innlogget, synkroniseres det i tillegg til skyen.
+// Hver økt har et endringstidspunkt (mod), og slettede økter huskes (deleted),
+// slik at endringer fra flere enheter kan flettes uten at noe går tapt.
+function blank() {
+  return { entries: [], running: null, runningMod: 0, deleted: {}, settings: { bankStart: DEFAULT_BANK }, settingsMod: 0 };
+}
+function normalize(s) {
+  const b = blank();
+  if (!s || !Array.isArray(s.entries)) return b;
+  return {
+    entries: s.entries, running: s.running || null, runningMod: s.runningMod || 0,
+    deleted: s.deleted || {}, settings: Object.assign(b.settings, s.settings || {}), settingsMod: s.settingsMod || 0
+  };
+}
+function load() {
+  try { return normalize(JSON.parse(localStorage.getItem(KEY))); } catch (e) { return blank(); }
+}
+function saveLocal() {
+  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { toast('Kunne ikke lagre'); }
+}
+function save() { saveLocal(); cloud.push(); }
+
+let state = load();
+addHistory();
+
+// Legger de tidligere timene inn i loggen. Har du endret eller slettet en av dem, blir den ikke lagt inn på nytt.
+// mod = 1 gjør at dine egne endringer alltid vinner ved synkronisering.
+function addHistory() {
+  const have = new Set(state.entries.map(e => e.id));
+  let added = false;
+  HISTORY.forEach(([k, from, to, code], i) => {
+    const id = 'hist-' + k + '-' + i;
+    if (have.has(id) || state.deleted[id]) return;
+    const e = from
+      ? { id, start: new Date(k + 'T' + from).getTime(), end: new Date(k + 'T' + to).getTime(), allDay: false, code, note: '', mod: 1 }
+      : { id, start: new Date(k + 'T00:00').getTime(), end: new Date(k + 'T00:00').getTime(), allDay: true, code, note: '', mod: 1 };
+    state.entries.push(e);
+    added = true;
+  });
+  if (added) saveLocal();
+}
+if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+
+function addEntry(e) { e.id = uid(); e.mod = now(); state.entries.push(e); return e; }
+function updateEntry(id, fields) { Object.assign(state.entries.find(x => x.id === id), fields, { mod: now() }); }
+function removeEntry(id) { state.entries = state.entries.filter(x => x.id !== id); state.deleted[id] = now(); }
+function setRunning(r) { state.running = r; state.runningMod = now(); }
+
+function mergeStates(a, b) {
+  const deleted = { ...a.deleted };
+  for (const [id, t] of Object.entries(b.deleted)) deleted[id] = Math.max(deleted[id] || 0, t);
+  const map = new Map();
+  for (const e of [...a.entries, ...b.entries]) {
+    const cur = map.get(e.id);
+    if (!cur || (e.mod || 0) > (cur.mod || 0)) map.set(e.id, e);
+  }
+  const entries = [...map.values()].filter(e => !(deleted[e.id] >= (e.mod || 0)));
+  const runB = b.runningMod > a.runningMod, setB = b.settingsMod > a.settingsMod;
+  return {
+    entries, running: runB ? b.running : a.running, runningMod: Math.max(a.runningMod, b.runningMod),
+    deleted, settings: setB ? b.settings : a.settings, settingsMod: Math.max(a.settingsMod, b.settingsMod)
+  };
+}
+
+// ---------- Formattering ----------
+const pad = n => String(n).padStart(2, '0');
+// Varighet vises som «6 t 50 min» (eller «6 t» / «50 min» når den ene delen er 0)
+const hm = ms => { const m = Math.round(Math.max(0, ms) / 60000), h = Math.floor(m / 60), r = m % 60; return h && r ? h + ' t ' + r + ' min' : h || !r ? h + ' t' : r + ' min'; };
+const hmc = ms => { const m = Math.round(Math.max(0, ms) / 60000); return Math.floor(m / 60) + ':' + pad(m % 60); }; // 6:50, til regneark
+// Kalenderruter er smale: timer og minutter på hver sin linje
+const hmCal = ms => { const m = Math.round(ms / 60000), h = Math.floor(m / 60), r = m % 60; return (h ? h + ' t' : '') + (h && r ? '<br>' : '') + (r ? r + ' min' : ''); };
+const shm = ms => (ms < 0 ? '−' : '+') + hm(Math.abs(ms)); // med fortegn
+const hms = ms => { const s = Math.floor(Math.max(0, ms) / 1000); return Math.floor(s / 3600) + ':' + pad(Math.floor(s / 60) % 60) + ':' + pad(s % 60); };
+
+const long = hm;
+const clock = t => { const d = new Date(t); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+const isoDate = t => { const d = new Date(t); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+const mKey = t => { const d = new Date(t); return d.getFullYear() + '-' + pad(d.getMonth() + 1); };
+const keyDate = k => { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d || 1); };
+const mName = k => keyDate(k).toLocaleDateString('nb-NO', { month: 'long', year: 'numeric' });
+const mOnly = k => keyDate(k).toLocaleDateString('nb-NO', { month: 'long' });
+const dayName = k => keyDate(k).toLocaleDateString('nb-NO', { weekday: 'long', day: 'numeric', month: 'short' });
+const shortDay = k => keyDate(k).toLocaleDateString('nb-NO', { weekday: 'short', day: 'numeric' });
+const isWeekend = k => { const w = keyDate(k).getDay(); return w === 0 || w === 6; };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const dur = e => e.allDay ? 0 : (e.end ?? now()) - e.start;
+const plural = (n, one, many) => n + ' ' + (n === 1 ? one : many);
+const badge = c => c ? `<span class="code ${CODES[c].kind}">${c}</span>` : '';
+const deltaHtml = ms => `<span class="delta ${ms > 0 ? 'pos' : ms < 0 ? 'neg' : ''}">${shm(ms)}</span>`;
+
+// Alle økter, inkludert en som går nå
+function all() {
+  const list = state.entries.slice();
+  if (state.running) list.push({ id: 'live', start: state.running.start, end: null, note: state.running.note || '' });
+  return list;
+}
+function byDay(list) {
+  const m = new Map();
+  list.forEach(e => { const k = isoDate(e.start); if (!m.has(k)) m.set(k, []); m.get(k).push(e); });
+  return m;
+}
+function sumBetween(from, to) {
+  return all().filter(e => e.start >= from && e.start < to).reduce((a, e) => a + dur(e), 0);
+}
+
+// Kodene for en dag. X legges automatisk på helgedager med timer.
+function dayCodes(k, es) {
+  const s = new Set(es.map(e => e.code).filter(Boolean));
+  if (isWeekend(k) && !s.has('X') && !s.has('XR') && es.some(e => !e.allDay)) s.add('X');
+  return [...s];
+}
+// Pluss/minus for en dag, etter samme regler som arbeidstidsskjemaet
+function dayDelta(k, es) {
+  const codes = dayCodes(k, es);
+  const worked = es.reduce((a, e) => a + dur(e), 0);
+  if (codes.includes('XR')) return XR_HOURS;
+  if (codes.includes('X')) return worked;
+  if (codes.includes('A')) return worked - normalDay(k);
+  if (codes.some(c => CODES[c].kind === 'abs')) return 0;
+  return worked - normalDay(k);
+}
+const dayKind = codes => codes.some(c => CODES[c].kind === 'plus') ? 'plus' : codes.includes('A') ? 'minus' : codes.length ? 'abs' : '';
+
+// Hele banken, med oppsummering per måned
+function computeBank() {
+  const months = new Map();
+  let plus = 0, minus = 0;
+  const otDays = [], aDays = [], abs = new Map();
+  byDay(all()).forEach((es, k) => {
+    const d = dayDelta(k, es), codes = dayCodes(k, es), mk = k.slice(0, 7);
+    if (d > 0) plus += d; else minus += d;
+    const o = months.get(mk) || { delta: 0, ot: [], a: [], abs: [] };
+    o.delta += d;
+    if (codes.some(c => CODES[c].kind === 'plus')) { o.ot.push(k); otDays.push(k); }
+    if (codes.includes('A')) { o.a.push(k); aDays.push(k); }
+    codes.filter(c => CODES[c].kind === 'abs').forEach(c => {
+      o.abs.push([k, c]);
+      if (!abs.has(c)) abs.set(c, []);
+      abs.get(c).push(k);
+    });
+    months.set(mk, o);
+  });
+  const start = state.settings.bankStart * 60000;
+  return { start, plus, minus, total: start + plus + minus, months, otDays, aDays, abs };
+}
+
+// ---------- Navigasjon ----------
+const titles = { timer: 'Timer', log: 'Logg', ot: 'Overtid', months: 'Måneder' };
+let view = 'timer';
+function go(v) {
+  view = v;
+  document.body.dataset.view = v;
+  document.querySelectorAll('.view').forEach(s => s.classList.toggle('active', s.id === 'view-' + v));
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active', b.dataset.go === v));
+  $('title').textContent = titles[v];
+  render();
+  window.scrollTo(0, 0);
+}
+document.querySelectorAll('nav button').forEach(b => b.addEventListener('click', () => go(b.dataset.go)));
+
+// ---------- Timer ----------
+$('toggle').addEventListener('click', () => {
+  if (state.running) {
+    const k = isoDate(state.running.start);
+    const e = addEntry({ start: state.running.start, end: now(), note: state.running.note || '', code: isWeekend(k) ? 'X' : '' });
+    setRunning(null);
+    save();
+    toast('Lagret: ' + long(e.end - e.start));
+  } else {
+    setRunning({ start: now(), note: '' });
+    save();
+  }
+  if (navigator.vibrate) navigator.vibrate(15);
+  render();
+});
+$('add-manual').addEventListener('click', () => openSheet(null));
+$('fab').addEventListener('click', () => openSheet(null, logMode === 'cal' ? selDay : null));
+
+// Hurtigknapper: registrerer en ferdig økt eller en kode på valgt dato
+const PRESETS = {
+  helg: { name: 'Helg', cls: 'q-plus', sub: () => 'XR · 10 t' },
+  dag:  { name: 'Vanlig arbeidsdag', cls: '', sub: k => '08:00–' + clock(at8(k) + workDay(k)) + ' · −0:10 i banken' },
+  syk:  { name: 'Syk – egenmelding', cls: 'q-abs', sub: () => 'S · hele dagen' },
+  avsp: { name: 'Avspasering', cls: '', sub: k => 'A · −' + hm(normalDay(k)) + ' fra banken' }
+};
+function presetEntry(key, k) {
+  const t0 = keyDate(k).getTime();
+  if (key === 'helg') return { start: at8(k), end: at8(k) + XR_HOURS, code: 'XR', note: '' };
+  if (key === 'dag') return { start: at8(k), end: at8(k) + workDay(k), code: '', note: '' };
+  if (key === 'syk') return { start: t0, end: t0, allDay: true, code: 'S', note: '' };
+  if (key === 'avsp') return { start: t0, end: t0, allDay: true, code: 'A', note: '' };
+}
+function addPreset(key, k) {
+  const e = addEntry(presetEntry(key, k));
+  save(); render();
+  if (navigator.vibrate) navigator.vibrate(15);
+  const what = e.allDay ? CODES[e.code].label : hm(e.end - e.start);
+  toast('Registrert: ' + what + (k === isoDate(now()) ? '' : ' ' + shortDay(k)), () => {
+    removeEntry(e.id); save(); render(); toast('Angret');
+  });
+}
+function presetButtons(k, short) {
+  return Object.entries(PRESETS).map(([key, p]) =>
+    short ? `<button class="${p.cls}" data-preset="${key}">+ ${p.name}</button>`
+          : `<button class="${p.cls}" data-preset="${key}"><b>${p.name}</b><small>${esc(p.sub(k))}</small></button>`).join('');
+}
+
+function renderTimer() {
+  const run = state.running;
+  $('clock').classList.toggle('running', !!run);
+  $('toggle').textContent = run ? 'Stopp' : 'Start';
+  $('time').textContent = run ? hms(now() - run.start) : '0:00:00';
+  if (run) {
+    $('status').innerHTML = 'Startet kl. ' + clock(run.start) + ' · <button id="edit-run">endre</button>';
+    $('edit-run').addEventListener('click', () => openSheet('live'));
+  } else {
+    $('status').textContent = 'Klar til å starte';
+  }
+  const d = new Date();
+  const Y = d.getFullYear(), M = d.getMonth(), D = d.getDate(), wd = (d.getDay() + 6) % 7; // wd: 0 = mandag
+  const at = n => new Date(Y, M, D + n).getTime();
+  $('s-day').textContent = hm(sumBetween(at(0), at(1)));
+  $('s-week').textContent = hm(sumBetween(at(-wd), at(7 - wd)));
+  const b = computeBank().total;
+  $('s-bank').textContent = (b < 0 ? '−' : '') + hm(Math.abs(b));
+  const today = isoDate(now());
+  $('quick-today').innerHTML = presetButtons(today, false);
+  $('quick-today').querySelectorAll('[data-preset]').forEach(btn => btn.addEventListener('click', () => addPreset(btn.dataset.preset, today)));
+}
+
+// ---------- Logg ----------
+let month = mKey(now());
+let logMode = 'list';
+try { logMode = localStorage.getItem('timelogg.mode') || 'list'; } catch (e) {}
+document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
+  logMode = b.dataset.mode;
+  try { localStorage.setItem('timelogg.mode', logMode); } catch (e) {}
+  renderLog();
+}));
+function shiftMonth(n) {
+  const [y, m] = month.split('-').map(Number);
+  month = mKey(new Date(y, m - 1 + n, 1).getTime());
+  renderLog();
+}
+$('prev').addEventListener('click', () => shiftMonth(-1));
+$('next').addEventListener('click', () => shiftMonth(1));
+
+function renderLog() {
+  const list = all().filter(e => mKey(e.start) === month).sort((a, b) => b.start - a.start);
+  const total = list.reduce((a, e) => a + dur(e), 0);
+  const days = byDay(list);
+  let delta = 0;
+  days.forEach((es, k) => { delta += dayDelta(k, es); });
+  $('m-name').textContent = mName(month);
+  $('m-sum').textContent = hm(total);
+  $('m-sum2').innerHTML = list.length ? plural(days.size, 'dag', 'dager') + ' · bank ' + deltaHtml(delta) : 'Ingen timer';
+  $('next').disabled = month >= mKey(now());
+  document.querySelectorAll('.seg button').forEach(b => b.classList.toggle('active', b.dataset.mode === logMode));
+
+  if (logMode === 'cal') { renderCalendar(days); return; }
+  if (!list.length) { $('log-list').innerHTML = '<div class="empty">Ingen registrerte timer denne måneden.</div>'; return; }
+  let html = '';
+  days.forEach((es, k) => { html += dayBlock(k, es); });
+  $('log-list').innerHTML = html;
+  bindEntries();
+}
+
+function dayBlock(k, es) {
+  const sum = es.reduce((a, e) => a + dur(e), 0);
+  const codes = dayCodes(k, es);
+  let html = `<div class="day"><div class="dayhead"><span>${esc(dayName(k))}${codes.map(badge).join('')}</span><span>${hm(sum)} · ${deltaHtml(dayDelta(k, es))}</span></div><div class="entries">`;
+  es.forEach(e => {
+    const live = e.end === null;
+    const code = e.code || (isWeekend(k) && !e.allDay ? 'X' : '');
+    const span = e.allDay ? esc(CODES[e.code] ? CODES[e.code].label : 'Hele dagen') : clock(e.start) + ' – ' + (live ? 'pågår' : clock(e.end));
+    html += `<button class="entry${live ? ' live' : ''}" data-id="${e.id}">
+      <div class="grow"><div class="span">${span}${e.allDay ? '' : badge(code)}</div>${e.note ? `<div class="note">${esc(e.note)}</div>` : ''}</div>
+      <div class="dur">${e.allDay ? badge(e.code) : hm(dur(e))}</div><div class="chev">›</div></button>`;
+  });
+  return html + '</div></div>';
+}
+function bindEntries() {
+  $('log-list').querySelectorAll('.entry').forEach(b => b.addEventListener('click', () => openSheet(b.dataset.id)));
+}
+
+// Kalendervisning: timer og koder under hver dato, trykk på en dato for å se og endre
+let selDay = null;
+function renderCalendar(days) {
+  const [y, m] = month.split('-').map(Number);
+  const count = new Date(y, m, 0).getDate();
+  const lead = (new Date(y, m - 1, 1).getDay() + 6) % 7; // mandag først
+  const today = isoDate(now());
+  if (!selDay || selDay.slice(0, 7) !== month) selDay = month === mKey(now()) ? today : null;
+
+  let html = '<div class="cal"><div class="wd">' + ['man', 'tir', 'ons', 'tor', 'fre', 'lør', 'søn'].map(d => `<span>${d}</span>`).join('') + '</div><div class="grid">';
+  for (let i = 0; i < lead; i++) html += '<span></span>';
+  for (let d = 1; d <= count; d++) {
+    const k = month + '-' + pad(d);
+    const es = days.get(k);
+    const sum = es ? es.reduce((a, e) => a + dur(e), 0) : 0;
+    const codes = es ? dayCodes(k, es) : [];
+    const kind = dayKind(codes);
+    const cls = [es ? 'has' : '', kind ? 'k-' + kind : '', k === today ? 'today' : '', k === selDay ? 'sel' : '', k > today ? 'future' : ''].join(' ');
+    html += `<button class="${cls}" data-day="${k}"><b>${d}</b><small>${sum ? hmCal(sum) : ''}</small><i>${codes.join(' ')}</i></button>`;
+  }
+  html += '</div></div>';
+
+  if (selDay) {
+    const es = days.get(selDay);
+    html += es ? dayBlock(selDay, es)
+      : `<div class="day"><div class="dayhead"><span>${esc(dayName(selDay))}</span><span>0:00</span></div></div>`;
+    html += `<div class="dayquick">${presetButtons(selDay, true)}</div>`;
+    html += `<button class="ghost" id="add-day">+ Legg til andre tider eller koder</button>`;
+  } else {
+    html += '<div class="empty">Trykk på en dato for å se eller endre timene.</div>';
+  }
+  $('log-list').innerHTML = html;
+  bindEntries();
+  $('log-list').querySelectorAll('[data-day]').forEach(b => b.addEventListener('click', () => { selDay = b.dataset.day; renderLog(); }));
+  $('log-list').querySelectorAll('.dayquick [data-preset]').forEach(b => b.addEventListener('click', () => addPreset(b.dataset.preset, selDay)));
+  if (selDay) $('add-day').addEventListener('click', () => openSheet(null, selDay));
+}
+
+// ---------- Overtid ----------
+$('ot-start').addEventListener('click', () => {
+  const cur = state.settings.bankStart, neg = cur < 0, a = Math.abs(cur);
+  const v = prompt('Inngående saldo i overtidsbanken (timer:minutter, bruk minus foran ved minus-saldo)', (neg ? '-' : '') + Math.floor(a / 60) + ':' + pad(a % 60));
+  if (v === null) return;
+  const m = v.trim().replace('−', '-').match(/^(-?)(\d+)(?:[:.](\d{1,2}))?$/);
+  if (!m) { toast('Skriv f.eks. 21:24'); return; }
+  const mins = +m[2] * 60 + (+m[3] || 0);
+  state.settings = { ...state.settings, bankStart: m[1] ? -mins : mins };
+  state.settingsMod = now();
+  save(); render(); toast('Saldo oppdatert');
+});
+
+function renderOvertime() {
+  const b = computeBank();
+  $('ot-bank').textContent = (b.total < 0 ? '−' : '') + hm(Math.abs(b.total));
+  $('ot-bank-sub').textContent = '';
+  const y = String(new Date().getFullYear());
+  $('ot-days').textContent = b.otDays.length;
+  $('ot-a').textContent = plural(b.aDays.length, 'dag', 'dager');
+  $('ot-s').textContent = (b.abs.get('S') || []).filter(k => k.startsWith(y)).length;
+
+  const keys = [...b.months.keys()].sort().reverse();
+  let html = '', year = null;
+  keys.forEach(k => {
+    const yr = k.slice(0, 4);
+    if (yr !== year) {
+      if (year) html += '</div>';
+      html += `<div class="yearhead"><span>${yr}</span><span>${plural(b.otDays.filter(d => d.startsWith(yr)).length, 'overtidsdag', 'overtidsdager')}</span></div><div class="entries">`;
+      year = yr;
+    }
+    const o = b.months.get(k);
+    const chips = [
+      ...o.ot.map(d => `<span>${esc(shortDay(d))}</span>`),
+      ...o.a.map(d => `<span class="minus">A ${esc(shortDay(d))}</span>`),
+      ...o.abs.map(([d, c]) => `<span class="abs">${c} ${esc(shortDay(d))}</span>`)
+    ].join('');
+    html += `<button class="mrow" data-m="${k}">
+      <div class="top"><span class="mn">${esc(mOnly(k))}</span>${deltaHtml(o.delta)}</div>
+      <div class="meta">${plural(o.ot.length, 'overtidsdag', 'overtidsdager')}${o.a.length ? ' · ' + plural(o.a.length, 'avspaseringsdag', 'avspaseringsdager') : ''}</div>
+      ${chips ? `<div class="chips">${chips}</div>` : ''}</button>`;
+  });
+  $('ot-list').innerHTML = keys.length ? html + '</div>' : '<div class="empty">Ingen registreringer ennå.</div>';
+  $('ot-list').querySelectorAll('.mrow').forEach(el => el.addEventListener('click', () => { month = el.dataset.m; go('log'); }));
+
+  // Fravær i år, som i arket
+  const absRows = Object.keys(CODES).filter(c => CODES[c].kind === 'abs')
+    .map(c => [c, (b.abs.get(c) || []).filter(k => k.startsWith(y)).length]).filter(([, n]) => n);
+  $('abs-box').innerHTML = absRows.length ? `<h2>Fravær ${y}</h2><div class="entries">` +
+    absRows.map(([c, n]) => `<div class="absrow"><span>${badge(c)} ${esc(CODES[c].label)}</span><b>${plural(n, 'dag', 'dager')}</b></div>`).join('') + '</div>' : '';
+
+  $('codes-help').innerHTML =
+    `<div><span class="code" style="background:var(--warm)">–</span><span>Vanlig arbeidsdag: timer over eller under normaldagen (6:30, eller 5:30 fra mai til august) gir pluss eller minus.</span></div>` +
+    Object.entries(CODES).filter(([, c]) => c.kind !== 'abs').map(([k, c]) => `<div>${badge(k)}<span><b>${esc(c.label)}.</b> ${esc(c.help)}</span></div>`).join('') +
+    `<div><span class="code abs">S …</span><span>Sykdom, ferie, kurs og permisjon påvirker ikke banken.</span></div>`;
+}
+
+// ---------- Måneder ----------
+function renderMonths() {
+  const b = computeBank();
+  const byMonth = new Map();
+  all().forEach(e => {
+    const k = mKey(e.start);
+    const o = byMonth.get(k) || { ms: 0, days: new Set() };
+    o.ms += dur(e); o.days.add(isoDate(e.start));
+    byMonth.set(k, o);
+  });
+  const keys = [...byMonth.keys()].sort().reverse();
+  renderAccount();
+  if (!keys.length) { $('month-list').innerHTML = '<div class="empty">Når du har registrert timer, ser du oversikten per måned her.</div>'; return; }
+  const max = Math.max(...keys.map(k => byMonth.get(k).ms));
+  let html = '', year = null;
+  keys.forEach(k => {
+    const y = k.slice(0, 4);
+    if (y !== year) {
+      if (year) html += '</div>';
+      const ytot = keys.filter(x => x.startsWith(y)).reduce((a, x) => a + byMonth.get(x).ms, 0);
+      html += `<div class="yearhead"><span>${y}</span><span>${hm(ytot)}</span></div><div class="entries">`;
+      year = y;
+    }
+    const o = byMonth.get(k), bm = b.months.get(k);
+    html += `<button class="mrow" data-m="${k}">
+      <div class="top"><span class="mn">${esc(mOnly(k))}</span><span class="mh">${hm(o.ms)}</span></div>
+      <div class="bar"><i style="width:${max ? (o.ms / max * 100).toFixed(1) : 0}%"></i></div>
+      <div class="meta">${plural(o.days.size, 'dag', 'dager')}${bm ? ' · bank ' + deltaHtml(bm.delta) : ''}</div></button>`;
+  });
+  $('month-list').innerHTML = html + '</div>';
+  $('month-list').querySelectorAll('.mrow').forEach(el => el.addEventListener('click', () => { month = el.dataset.m; go('log'); }));
+}
+
+// ---------- Redigering ----------
+const sheet = $('sheet');
+let editing = null; // null = ny, 'live' = pågående, ellers id
+$('f-code').innerHTML = '<option value="">Ingen kode (vanlig arbeid)</option>' +
+  Object.entries(CODES).map(([k, c]) => `<option value="${k}">${k} – ${esc(c.label)}</option>`).join('');
+
+function openSheet(id, date) {
+  editing = id;
+  const isLive = id === 'live';
+  const e = isLive ? { start: state.running.start, note: state.running.note || '' }
+          : id ? state.entries.find(x => x.id === id) : null;
+  $('sheet-title').textContent = isLive ? 'Pågående økt' : e ? 'Endre registrering' : 'Ny registrering';
+  $('end-wrap').style.visibility = isLive ? 'hidden' : '';
+  $('code-wrap').style.display = isLive ? 'none' : '';
+  $('delete').style.display = e ? '' : 'none';
+  $('delete').textContent = isLive ? 'Avbryt økten uten å lagre' : 'Slett';
+  if (e) {
+    $('f-date').value = isoDate(e.start);
+    $('f-code').value = e.code || '';
+    $('f-start').value = e.allDay ? '' : clock(e.start);
+    $('f-end').value = e.allDay || !e.end ? '' : clock(e.end);
+    $('f-note').value = e.note || '';
+  } else {
+    const k = date || isoDate(now());
+    $('f-date').value = k;
+    $('f-code').value = '';
+    $('f-start').value = '08:00';
+    $('f-end').value = clock(at8(k) + workDay(k));
+    $('f-note').value = '';
+  }
+  updatePreview();
+  sheet.showModal();
+}
+
+function readForm() {
+  const date = $('f-date').value, s = $('f-start').value, en = $('f-end').value, code = $('f-code').value;
+  if (!date) return { err: 'Fyll inn dato' };
+  if (editing === 'live') {
+    if (!s) return { err: 'Fyll inn starttid' };
+    const start = new Date(date + 'T' + s).getTime();
+    if (start > now()) return { err: 'Starttid kan ikke være i fremtiden' };
+    return { start };
+  }
+  const t0 = keyDate(date).getTime();
+  if (!s && !en) {
+    if (!code) return { err: 'Fyll inn start og slutt, eller velg en kode' };
+    return { start: t0, end: t0, allDay: true, code };
+  }
+  if (!s || !en) return { err: 'Fyll inn både start og slutt' };
+  const start = new Date(date + 'T' + s).getTime();
+  let end = new Date(date + 'T' + en).getTime();
+  if (end <= start) end += DAY; // over midnatt
+  return { start, end, allDay: false, code, overnight: isoDate(end) !== date };
+}
+
+function updatePreview() {
+  const r = readForm(), p = $('preview');
+  p.classList.toggle('err', !!r.err);
+  if (r.err) { p.textContent = r.err; return; }
+  if (editing === 'live') { p.innerHTML = 'Har gått i <b>' + long(now() - r.start) + '</b>'; return; }
+  const k = $('f-date').value;
+  const others = state.entries.filter(x => x.id !== editing && isoDate(x.start) === k);
+  const d = dayDelta(k, [...others, { start: r.start, end: r.end, allDay: r.allDay, code: r.code }]);
+  p.innerHTML = (r.allDay ? 'Hele dagen' : 'Varighet: <b>' + long(r.end - r.start) + '</b>' + (r.overnight ? ' (over midnatt)' : '')) +
+    ' · dagen gir ' + deltaHtml(d) + ' i banken';
+}
+['f-date', 'f-start', 'f-end', 'f-code'].forEach(id => $(id).addEventListener('input', updatePreview));
+
+$('form').addEventListener('submit', ev => {
+  ev.preventDefault();
+  const r = readForm();
+  if (r.err) { updatePreview(); return; }
+  const note = $('f-note').value.trim();
+  if (editing === 'live') setRunning({ start: r.start, note });
+  else {
+    const fields = { start: r.start, end: r.end, allDay: r.allDay, code: r.code, note };
+    if (editing) updateEntry(editing, fields);
+    else { addEntry(fields); month = mKey(r.start); selDay = isoDate(r.start); }
+  }
+  save(); sheet.close(); render();
+  toast('Lagret');
+});
+$('cancel').addEventListener('click', () => sheet.close());
+sheet.addEventListener('click', ev => { if (ev.target === sheet) sheet.close(); });
+$('delete').addEventListener('click', () => {
+  const live = editing === 'live';
+  if (!confirm(live ? 'Avbryte økten uten å lagre den?' : 'Slette denne registreringen?')) return;
+  if (live) setRunning(null);
+  else removeEntry(editing);
+  save(); sheet.close(); render();
+  toast(live ? 'Økten ble avbrutt' : 'Slettet');
+});
+
+// ---------- Eksport / import ----------
+function download(name, text, type) {
+  const blob = new Blob([text], { type });
+  const file = new File([blob], name, { type });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    navigator.share({ files: [file], title: name }).catch(() => {});
+    return;
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+$('export-csv').addEventListener('click', () => {
+  const rows = [['Dato', 'Fra', 'Til', 'Timer', 'Kode', 'Dagens +/-', 'Notat']];
+  const days = byDay(state.entries);
+  [...days.keys()].sort().forEach(k => {
+    const es = days.get(k).sort((a, b) => a.start - b.start), d = dayDelta(k, es);
+    es.forEach((e, i) => rows.push([k, e.allDay ? '' : clock(e.start), e.allDay ? '' : clock(e.end), e.allDay ? '' : hmc(dur(e)),
+      e.code || (isWeekend(k) && !e.allDay ? 'X' : ''), i === es.length - 1 ? shm(d).replace('−', '-') : '', e.note || '']));
+  });
+  const csv = '﻿' + rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(';')).join('\r\n');
+  download('timelogg-' + isoDate(now()) + '.csv', csv, 'text/csv');
+});
+$('export-json').addEventListener('click', () => {
+  download('timelogg-backup-' + isoDate(now()) + '.json', JSON.stringify(state, null, 2), 'application/json');
+});
+$('import-json').addEventListener('click', () => $('import-file').click());
+// Import legger til registreringer fra filen. Det som allerede finnes (samme id), blir ikke duplisert.
+$('import-file').addEventListener('change', async ev => {
+  const f = ev.target.files[0]; ev.target.value = '';
+  if (!f) return;
+  try {
+    const data = JSON.parse(await f.text());
+    if (!Array.isArray(data.entries)) throw new Error();
+    const have = new Set(state.entries.map(e => e.id));
+    const fresh = data.entries.filter(e => e && e.id && !have.has(e.id));
+    const msg = 'Legge til ' + plural(fresh.length, 'registrering', 'registreringer') + ' fra filen?' +
+      (data.settings && typeof data.settings.bankStart === 'number' ? '\n\nInngående saldo settes til ' + shm(data.settings.bankStart * 60000) + '.' : '');
+    if (!confirm(msg)) return;
+    const t = now();
+    fresh.forEach(e => { e.mod = t; delete state.deleted[e.id]; state.entries.push(e); });
+    if (data.settings && typeof data.settings.bankStart === 'number') {
+      state.settings = { ...state.settings, bankStart: data.settings.bankStart }; state.settingsMod = t;
+    }
+    save(); render(); toast('Importert ' + plural(fresh.length, 'registrering', 'registreringer'));
+  } catch (e) { toast('Ugyldig fil'); }
+});
+
+// ---------- Skylagring med Google-konto (Firebase) ----------
+const cloud = { configured: !!(FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey), user: null, status: 'off', last: 0, push() {} };
+const GOOGLE_ICON = '<svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.5z"/></svg>';
+
+function renderCloud() {
+  const b = $('cloud');
+  b.hidden = !cloud.configured;
+  if (!cloud.configured) return;
+  const t = { ok: '☁ Lagret', syncing: '☁ Lagrer …', error: '⚠ Ikke lagret i sky', out: 'Logg inn', offline: '☁ Frakoblet', off: '☁ …' };
+  b.textContent = t[cloud.status] || '';
+  b.classList.toggle('err', cloud.status === 'error' || cloud.status === 'out');
+}
+$('cloud').addEventListener('click', () => go('months'));
+
+function renderAccount() {
+  const el = $('account');
+  if (!cloud.configured) {
+    el.innerHTML = '<p>Skylagring er ikke satt opp ennå. Følg oppskriften i <b>OPPSETT.md</b>, så kan du logge inn med Google og få timene lagret trygt i skyen.</p>';
+    return;
+  }
+  if (cloud.status === 'offline' && !cloud.user) {
+    el.innerHTML = '<p>Ingen nettforbindelse. Timene lagres på telefonen og synkroniseres når du er på nett igjen.</p>';
+    return;
+  }
+  if (!cloud.user) {
+    el.innerHTML = `<p>Logg inn med Google for å lagre timene i skyen. Da mister du dem ikke selv om du bytter telefon eller nettleserdata slettes.</p><button class="gbtn" id="login">${GOOGLE_ICON}Logg inn med Google</button>`;
+    $('login').addEventListener('click', () => cloud.signIn());
+    return;
+  }
+  el.innerHTML = `<p>Innlogget som <b>${esc(cloud.user.email || cloud.user.displayName || '')}</b></p>
+    <p>${cloud.status === 'error' ? 'Kunne ikke lagre i skyen sist. Prøver igjen ved neste endring.' : cloud.last ? 'Sist synkronisert kl. ' + clock(cloud.last) : 'Synkroniserer …'}</p>
+    <button class="linkbtn" id="logout">Logg ut</button>`;
+  $('logout').addEventListener('click', () => { if (confirm('Logge ut? Timene blir liggende på telefonen.')) cloud.signOut(); });
+}
+
+async function initCloud() {
+  if (!cloud.configured) { renderCloud(); return; }
+  const base = 'https://www.gstatic.com/firebasejs/10.12.2/';
+  let A, AU, FS;
+  try {
+    [A, AU, FS] = await Promise.all([import(base + 'firebase-app.js'), import(base + 'firebase-auth.js'), import(base + 'firebase-firestore.js')]);
+  } catch (e) {
+    cloud.status = 'offline'; renderCloud(); if (view === 'months') renderAccount(); return;
+  }
+  const app = A.initializeApp(FIREBASE_CONFIG);
+  const auth = AU.getAuth(app);
+  const db = FS.getFirestore(app);
+  const provider = new AU.GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
+
+  cloud.signIn = async () => {
+    try { await AU.signInWithPopup(auth, provider); }
+    catch (e) {
+      if (['auth/popup-blocked', 'auth/operation-not-supported-in-this-environment', 'auth/cancelled-popup-request'].includes(e.code)) {
+        await AU.signInWithRedirect(auth, provider);
+      } else if (e.code !== 'auth/popup-closed-by-user') toast('Innlogging feilet: ' + (e.code || e.message));
+    }
+  };
+  cloud.signOut = () => AU.signOut(auth);
+  AU.getRedirectResult(auth).catch(e => toast('Innlogging feilet: ' + (e.code || e.message)));
+
+  const pick = s => ({ entries: s.entries, running: s.running, runningMod: s.runningMod, deleted: s.deleted, settings: s.settings, settingsMod: s.settingsMod });
+  let unsub = null, timer = null, lastSynced = '';
+
+  cloud.push = () => {
+    if (!cloud.user) return;
+    clearTimeout(timer);
+    timer = setTimeout(async () => {
+      const data = JSON.stringify(pick(state));
+      if (data === lastSynced) return;
+      cloud.status = 'syncing'; renderCloud();
+      try {
+        await FS.setDoc(FS.doc(db, 'users', cloud.user.uid), { data, updated: FS.serverTimestamp() });
+        lastSynced = data; cloud.status = 'ok'; cloud.last = now();
+      } catch (e) { cloud.status = 'error'; }
+      renderCloud(); if (view === 'months') renderAccount();
+    }, 600);
+  };
+
+  AU.onAuthStateChanged(auth, user => {
+    cloud.user = user;
+    if (unsub) { unsub(); unsub = null; }
+    if (user) {
+      cloud.status = 'syncing';
+      // Hent det som ligger i skyen, flett med det som er på telefonen, og lagre resultatet begge steder
+      unsub = FS.onSnapshot(FS.doc(db, 'users', user.uid), snap => {
+        const remoteStr = snap.exists() ? snap.data().data : '';
+        let remote = blank();
+        try { if (remoteStr) remote = normalize(JSON.parse(remoteStr)); } catch (e) {}
+        state = mergeStates(state, remote);
+        saveLocal();
+        render();
+        const mergedStr = JSON.stringify(pick(state));
+        if (mergedStr !== remoteStr) cloud.push();
+        else { lastSynced = mergedStr; cloud.status = 'ok'; cloud.last = now(); renderCloud(); if (view === 'months') renderAccount(); }
+      }, () => { cloud.status = 'error'; renderCloud(); });
+    } else {
+      cloud.status = 'out';
+    }
+    renderCloud(); if (view === 'months') renderAccount();
+  });
+}
+
+// ---------- Diverse ----------
+function uid() { return now().toString(36) + Math.random().toString(36).slice(2, 7); }
+let toastTimer;
+function toast(msg, undo) {
+  const t = $('toast'); t.textContent = msg;
+  if (undo) {
+    const b = document.createElement('button');
+    b.textContent = 'Angre';
+    b.addEventListener('click', () => { t.classList.remove('show'); undo(); });
+    t.appendChild(b);
+  }
+  t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), undo ? 5000 : 1800);
+}
+function render() {
+  if (view === 'timer') renderTimer();
+  else if (view === 'log') renderLog();
+  else if (view === 'ot') renderOvertime();
+  else renderMonths();
+}
+
+setInterval(() => { if (state.running && !sheet.open) render(); }, 1000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { state = load(); render(); cloud.push(); } });
+
+render();
+initCloud();
+if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
