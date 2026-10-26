@@ -1,9 +1,10 @@
 // Gjør appen tilgjengelig uten nett. Øk versjonsnummeret når du endrer filene.
-const CACHE = 'timelogg-v11';
+const CACHE = 'timelogg-v13';
 const ASSETS = ['./', './index.html', './firebase-config.js', './manifest.webmanifest', './icon.svg', './icon-180.png', './icon-192.png', './icon-512.png'];
 
+// cache: 'reload' henter filene rett fra serveren, så en ny versjon aldri får med seg gamle filer fra nettleserens mellomlager
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS.map(u => new Request(u, { cache: 'reload' })))));
   self.skipWaiting();
 });
 

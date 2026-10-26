@@ -24,6 +24,8 @@ En enkel timeregistreringsapp for mobil, laget som en installerbar nettapp (PWA)
 - **Google-innlogging** med synkronisering til skyen (Firebase), og alt fungerer også uten nett
 - **Eksport** til regneark (CSV) for én måned, alle måneder eller et utvalg, med sumlinje per måned, og sikkerhetskopi til fil
 
+- **Norsk og engelsk:** bytt språk med knappen øverst til høyre
+
 Designet følger fargene og typografien i [UiAs grafiske profil](https://www.uia.no/om-uia/designmanual/).
 
 ## Teknologi

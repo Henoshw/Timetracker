@@ -291,6 +291,8 @@
     border-radius: 14px; background: rgba(255,255,255,.18); white-space: nowrap;
   }
   .cloud.err { background: #fff; color: #C8102E; }
+  .hbtns { display: flex; gap: 8px; align-items: center; }
+  .langbtn { min-width: 40px; text-align: center; }
   .account { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
   .account p { margin: 0 0 12px; color: var(--sub); font-size: 15px; }
   .account p b { color: var(--text); }
@@ -360,44 +362,44 @@
 </head>
 <body data-view="timer">
 
-<header><h1 id="title">Timer</h1><button class="cloud" id="cloud" hidden></button></header>
+<header><h1 id="title">Timer</h1><div class="hbtns"><button class="cloud" id="cloud" hidden></button><button class="cloud langbtn" id="lang">EN</button></div></header>
 
 <main>
   <!-- TIMER -->
   <section class="view active" id="view-timer">
     <div class="clock" id="clock">
-      <div class="status" id="status">Klar til å starte</div>
+      <div class="status" id="status"></div>
       <div class="time" id="time">0:00:00</div>
       <button class="big" id="toggle">Start</button>
     </div>
     <div class="forgot" id="forgot" hidden></div>
     <div class="ferie" id="ferie" hidden></div>
     <div class="stats">
-      <div class="stat"><div class="lbl">I dag</div><div class="val" id="s-day">0:00</div></div>
-      <div class="stat"><div class="lbl">Denne uka</div><div class="val" id="s-week">0:00</div></div>
-      <div class="stat"><div class="lbl">Overtidsbank</div><div class="val" id="s-bank">0:00</div></div>
+      <div class="stat"><div class="lbl" data-t="today"></div><div class="val" id="s-day">0:00</div></div>
+      <div class="stat"><div class="lbl" data-t="thisWeek"></div><div class="val" id="s-week">0:00</div></div>
+      <div class="stat"><div class="lbl" data-t="bank"></div><div class="val" id="s-bank">0:00</div></div>
     </div>
     <div class="quick">
-      <h2>Hurtigregistrering i dag</h2>
+      <h2 data-t="quickToday"></h2>
       <div class="grid four" id="quick-today"></div>
     </div>
-    <button class="ghost" id="add-manual">+ Legg inn timer manuelt</button>
+    <button class="ghost" id="add-manual" data-t="addManual"></button>
   </section>
 
   <!-- LOGG -->
   <section class="view" id="view-log">
     <div class="monthbar">
-      <button id="prev" aria-label="Forrige måned">‹</button>
+      <button id="prev" data-ta="prevMonth">‹</button>
       <div class="mid">
         <div class="name" id="m-name"></div>
         <div class="sum" id="m-sum"></div>
         <div class="sum2" id="m-sum2"></div>
       </div>
-      <button id="next" aria-label="Neste måned">›</button>
+      <button id="next" data-ta="nextMonth">›</button>
     </div>
     <div class="seg">
-      <button data-mode="list">Liste</button>
-      <button data-mode="cal">Kalender</button>
+      <button data-mode="list" data-t="list"></button>
+      <button data-mode="cal" data-t="calendar"></button>
     </div>
     <div id="log-list"></div>
   </section>
@@ -405,21 +407,21 @@
   <!-- OVERTID -->
   <section class="view" id="view-ot">
     <div class="bank">
-      <div class="lbl">Overtidsbank</div>
+      <div class="lbl" data-t="bank"></div>
       <div class="num" id="ot-bank">0:00</div>
       <div class="sub" id="ot-bank-sub"></div>
-      <button id="ot-start">Endre inngående saldo</button>
+      <button id="ot-start" data-t="editStart"></button>
     </div>
     <div class="stats">
-      <div class="stat"><div class="lbl">Overtidsdager</div><div class="val" id="ot-days">0</div></div>
-      <div class="stat"><div class="lbl">Avspasert</div><div class="val" id="ot-a">0</div></div>
-      <div class="stat"><div class="lbl">Egenmeldt i år</div><div class="val" id="ot-s">0</div></div>
+      <div class="stat"><div class="lbl" data-t="otDays"></div><div class="val" id="ot-days">0</div></div>
+      <div class="stat"><div class="lbl" data-t="aTaken"></div><div class="val" id="ot-a">0</div></div>
+      <div class="stat"><div class="lbl" data-t="sickYear"></div><div class="val" id="ot-s">0</div></div>
     </div>
     <div id="ot-list"></div>
     <div class="tools" id="sick-box"></div>
     <div class="tools" id="abs-box"></div>
     <div class="tools codes-help">
-      <h2>Slik regnes banken (som i arbeidstidsskjemaet)</h2>
+      <h2 data-t="codesHelpTitle"></h2>
       <div class="entries" id="codes-help"></div>
     </div>
   </section>
@@ -428,95 +430,89 @@
   <section class="view" id="view-months">
     <div id="month-list"></div>
     <div class="tools">
-      <h2>Konto og skylagring</h2>
+      <h2 data-t="account"></h2>
       <div class="account" id="account"></div>
     </div>
     <div class="tools">
-      <h2>Automatisk start og stopp</h2>
+      <h2 data-t="autoTitle"></h2>
       <div class="account auto">
-        <p>Telefonen kan starte og stoppe timeren selv når hun kommer til eller forlater jobben, ved hjelp av en automatisering. Appen må være innlogget med Google både i appen og i nettleseren.</p>
-        <p><b>Stopp:</b> <code>timetracker-01.web.app/?stop</code><br><b>Start:</b> <code>timetracker-01.web.app/?start</code></p>
+        <p data-t="autoIntro"></p>
+        <p><b data-t="autoStop"></b> <code>timetracker-01.web.app/?stop</code><br><b data-t="autoStart"></b> <code>timetracker-01.web.app/?start</code></p>
         <details>
-          <summary>Slik gjør du det på iPhone</summary>
-          <ol>
-            <li>Åpne appen <b>Snarveier</b> → <b>Automatisering</b> → <b>+</b>.</li>
-            <li>Velg <b>Forlater</b> og søk opp jobben (Gimlekollen, Bergtoras vei 120, Kristiansand). Velg gjerne en liten radius.</li>
-            <li>Velg <b>Kjør umiddelbart</b> og trykk <b>Neste</b>.</li>
-            <li>Legg til handlingen <b>Åpne URL-er</b> med adressen for stopp over.</li>
-            <li>Lag gjerne en til med <b>Ankommer</b> og adressen for start.</li>
-          </ol>
+          <summary data-t="iphoneTitle"></summary>
+          <ol data-th="iphoneSteps"></ol>
         </details>
         <details>
-          <summary>Slik gjør du det på Android</summary>
-          <p>Bruk en automatiseringsapp (for eksempel Tasker eller MacroDroid) med «forlater område» som utløser og «åpne nettadresse» som handling, med adressene over.</p>
+          <summary data-t="androidTitle"></summary>
+          <p data-t="androidText"></p>
         </details>
       </div>
     </div>
     <div class="tools">
-      <h2>Data</h2>
+      <h2 data-t="data"></h2>
       <div class="entries">
-        <button id="export-csv">Eksporter til regneark (CSV)</button>
-        <button id="export-json">Ta sikkerhetskopi til fil</button>
-        <button id="import-json">Importer fra fil</button>
+        <button id="export-csv" data-t="exportCsv"></button>
+        <button id="export-json" data-t="backup"></button>
+        <button id="import-json" data-t="importFile"></button>
       </div>
       <input type="file" id="import-file" accept="application/json,.json" hidden>
     </div>
   </section>
 </main>
 
-<button class="fab" id="fab" aria-label="Legg til">+</button>
+<button class="fab" id="fab" data-ta="add">+</button>
 
 <nav>
   <button data-go="timer" class="active">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9.5 2h5"/></svg>
-    Timer
+    <span data-t="title.timer"></span>
   </button>
   <button data-go="log">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>
-    Logg
+    <span data-t="title.log"></span>
   </button>
   <button data-go="ot">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>
-    Overtid
+    <span data-t="title.ot"></span>
   </button>
   <button data-go="months">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
-    Måneder
+    <span data-t="title.months"></span>
   </button>
 </nav>
 
 <dialog id="sheet">
   <form class="sheet" id="form" method="dialog">
-    <h2 id="sheet-title">Ny økt</h2>
-    <label class="field"><span>Dato</span><input type="date" id="f-date" required></label>
-    <label class="field" id="code-wrap"><span>Kode</span><select id="f-code"></select></label>
+    <h2 id="sheet-title"></h2>
+    <label class="field"><span data-t="date"></span><input type="date" id="f-date" required></label>
+    <label class="field" id="code-wrap"><span data-t="code"></span><select id="f-code"></select></label>
     <div class="row2">
-      <label class="field"><span>Start</span><input type="time" id="f-start"></label>
-      <label class="field" id="end-wrap"><span>Slutt</span><input type="time" id="f-end"></label>
+      <label class="field"><span data-t="start"></span><input type="time" id="f-start"></label>
+      <label class="field" id="end-wrap"><span data-t="end"></span><input type="time" id="f-end"></label>
     </div>
-    <label class="field"><span>Notat (valgfritt)</span><input type="text" id="f-note" placeholder="F.eks. prosjekt eller kunde" maxlength="120"></label>
+    <label class="field"><span data-t="note"></span><input type="text" id="f-note" data-tp="notePh" maxlength="120"></label>
     <div class="preview" id="preview"></div>
     <div class="actions">
-      <button type="button" class="btn-cancel" id="cancel">Avbryt</button>
-      <button type="submit" class="btn-save">Lagre</button>
+      <button type="button" class="btn-cancel" id="cancel" data-t="cancel"></button>
+      <button type="submit" class="btn-save" data-t="save"></button>
     </div>
-    <button type="button" class="btn-del" id="delete">Slett økt</button>
+    <button type="button" class="btn-del" id="delete"></button>
   </form>
 </dialog>
 
 <dialog id="export">
   <form class="sheet" method="dialog">
-    <h2>Eksporter til regneark</h2>
+    <h2 data-t="exportTitle"></h2>
     <div class="scope">
-      <label><input type="radio" name="ex-scope" value="one" checked> <span>Én måned</span></label>
-      <label><input type="radio" name="ex-scope" value="all"> <span>Alle måneder</span></label>
-      <label><input type="radio" name="ex-scope" value="pick"> <span>Velg måneder</span></label>
+      <label><input type="radio" name="ex-scope" value="one" checked> <span data-t="oneMonth"></span></label>
+      <label><input type="radio" name="ex-scope" value="all"> <span data-t="allMonths"></span></label>
+      <label><input type="radio" name="ex-scope" value="pick"> <span data-t="pickMonths"></span></label>
     </div>
-    <label class="field" id="ex-month-wrap"><span>Måned</span><select id="ex-month"></select></label>
+    <label class="field" id="ex-month-wrap"><span data-t="monthLbl"></span><select id="ex-month"></select></label>
     <div class="ex-list" id="ex-list" hidden></div>
     <div class="actions">
-      <button type="button" class="btn-cancel" id="ex-cancel">Avbryt</button>
-      <button type="submit" class="btn-save" id="ex-go">Eksporter</button>
+      <button type="button" class="btn-cancel" id="ex-cancel" data-t="cancel"></button>
+      <button type="submit" class="btn-save" id="ex-go" data-t="exportBtn"></button>
     </div>
   </form>
 </dialog>
@@ -573,33 +569,168 @@ const HISTORY = [
 const $ = id => document.getElementById(id);
 const now = () => Date.now();
 
+// ---------- Språk (norsk / engelsk) ----------
+// Statisk tekst i HTML har data-t (tekst), data-th (HTML), data-tp (placeholder) eller data-ta (aria-label).
+// Dynamisk tekst hentes med t('nøkkel', ...argumenter) og pl(antall, 'substantiv').
+const I18N = {
+  nb: {
+    locale: 'nb-NO', h: 't', otherLang: 'EN', otherLangName: 'Switch to English',
+    nouns: { day: ['dag', 'dager'], otday: ['overtidsdag', 'overtidsdager'], aday: ['avspaseringsdag', 'avspaseringsdager'],
+      time: ['gang', 'ganger'], sicknote: ['egenmelding', 'egenmeldinger'], month: ['måned', 'måneder'], entry: ['registrering', 'registreringer'] },
+    'title.timer': 'Timer', 'title.log': 'Logg', 'title.ot': 'Overtid', 'title.months': 'Måneder',
+    ready: 'Klar til å starte', start: 'Start', stop: 'Stopp', startedAt: 'Startet kl. {0}', change: 'endre',
+    today: 'I dag', thisWeek: 'Denne uka', bank: 'Overtidsbank', quickToday: 'Hurtigregistrering i dag',
+    addManual: '+ Legg inn timer manuelt', prevMonth: 'Forrige måned', nextMonth: 'Neste måned', list: 'Liste', calendar: 'Kalender',
+    editStart: 'Endre inngående saldo', otDays: 'Overtidsdager', aTaken: 'Avspasert', sickYear: 'Egenmeldt i år',
+    codesHelpTitle: 'Slik regnes banken (som i arbeidstidsskjemaet)', account: 'Konto og skylagring', data: 'Data',
+    exportCsv: 'Eksporter til regneark (CSV)', backup: 'Ta sikkerhetskopi til fil', importFile: 'Importer fra fil', add: 'Legg til',
+    date: 'Dato', code: 'Kode', end: 'Slutt', note: 'Notat (valgfritt)', notePh: 'F.eks. prosjekt eller kunde',
+    cancel: 'Avbryt', save: 'Lagre', delete: 'Slett', exportTitle: 'Eksporter til regneark', oneMonth: 'Én måned',
+    allMonths: 'Alle måneder', pickMonths: 'Velg måneder', monthLbl: 'Måned', exportBtn: 'Eksporter',
+    autoTitle: 'Automatisk start og stopp',
+    autoIntro: 'Telefonen kan starte og stoppe timeren selv når hun kommer til eller forlater jobben, ved hjelp av en automatisering. Appen må være innlogget med Google både i appen og i nettleseren.',
+    autoStop: 'Stopp:', autoStart: 'Start:', iphoneTitle: 'Slik gjør du det på iPhone',
+    iphoneSteps: '<li>Åpne appen <b>Snarveier</b> → <b>Automatisering</b> → <b>+</b>.</li><li>Velg <b>Forlater</b> og søk opp jobben (Gimlekollen, Bergtoras vei 120, Kristiansand). Velg gjerne en liten radius.</li><li>Velg <b>Kjør umiddelbart</b> og trykk <b>Neste</b>.</li><li>Legg til handlingen <b>Åpne URL-er</b> med adressen for stopp over.</li><li>Lag gjerne en til med <b>Ankommer</b> og adressen for start.</li>',
+    androidTitle: 'Slik gjør du det på Android',
+    androidText: 'Bruk en automatiseringsapp (for eksempel Tasker eller MacroDroid) med «forlater område» som utløser og «åpne nettadresse» som handling, med adressene over.',
+    'code.X': 'Ekstra – ikke arbeidsdag / helligdag', 'code.XR': 'Helg – fast 10 timer', 'code.A': 'Avspasering',
+    'code.S': 'Syk – egenmelding', 'code.SM': 'Syk – sykemelding', 'code.SB': 'Sykt barn', 'code.F': 'Ferie', 'code.K': 'Kurs',
+    'code.V': 'Velferdspermisjon', 'code.P': 'Permisjon', 'code.D': 'Annet',
+    'help.X': 'Alle timene gir pluss-tid. Settes automatisk på lørdag og søndag.', 'help.XR': 'Gir alltid 10 timer i pluss.',
+    'help.A': 'Trekker en normal arbeidsdag fra banken.', 'help.abs': 'Fravær. Påvirker ikke banken.', 'help.none': 'Påvirker ikke banken.',
+    'hol.autumn': 'Høstferie', 'hol.christmas': 'Juleferie', 'hol.winter': 'Vinterferie', 'hol.easter': 'Påskeferie', 'hol.summer': 'Sommerferie',
+    holEnjoy: n => 'God ' + n.toLowerCase() + '!', holUntil: 'Varer til og med {0}', holUntilSchool: 'Varer til skolestart i august',
+    holIn: (n, d) => n + ' om ' + d, holFrom: 'Fra {0}', holShort: 'ferie',
+    'preset.helg': 'Helg', 'preset.dag': 'Vanlig arbeidsdag', 'preset.syk': 'Syk – egenmelding', 'preset.avsp': 'Avspasering',
+    presetDagSub: '{0} · −10 min i banken', allDay: 'hele dagen', presetAvspSub: 'A · −{0} fra banken',
+    saved: 'Lagret', savedDur: 'Lagret: {0}', registered: 'Registrert: {0}', undone: 'Angret', undo: 'Angre', couldNotSave: 'Kunne ikke lagre',
+    forgotTitle: 'Glemte du å stoppe timeren?', forgotText: 'Den ble startet {0} kl. {1} og har gått i {2}.', forgotFix: 'Stopp og rett sluttiden',
+    forgotToast: 'Sett riktig sluttid og trykk Lagre',
+    noHours: 'Ingen timer', bankWord: 'bank', noHoursMonth: 'Ingen registrerte timer denne måneden.', wholeDay: 'Hele dagen', ongoing: 'pågår',
+    addOther: '+ Legg til andre tider eller koder', tapDate: 'Trykk på en dato for å se eller endre timene.',
+    bankPrompt: 'Inngående saldo i overtidsbanken (timer:minutter, bruk minus foran ved minus-saldo)', bankExample: 'Skriv f.eks. 21:24', bankUpdated: 'Saldo oppdatert',
+    noEntries: 'Ingen registreringer ennå.', sickTitle: 'Egenmelding siste 12 måneder', spreadOver: 'fordelt på',
+    sickLeft: 'Etter hovedregelen har du {0} igjen.', sickNone: 'Du har brukt alle fire egenmeldingene etter hovedregelen.',
+    sickRule: 'Hovedregelen er egenmelding inntil 3 dager om gangen, 4 ganger i løpet av 12 måneder. Mange arbeidsgivere har avtale om flere dager, så sjekk hva som gjelder for deg.',
+    absence: 'Fravær {0}', helpNormal: 'Vanlig arbeidsdag: timer over eller under normaldagen (6:30, eller 5:30 fra mai til august) gir pluss eller minus.',
+    helpAbs: 'Sykdom, ferie, kurs og permisjon påvirker ikke banken.', monthsEmpty: 'Når du har registrert timer, ser du oversikten per måned her.',
+    noCode: 'Ingen kode (vanlig arbeid)', sheetLive: 'Pågående økt', sheetEdit: 'Endre registrering', sheetNew: 'Ny registrering', cancelRun: 'Avbryt økten uten å lagre',
+    errDate: 'Fyll inn dato', errStart: 'Fyll inn starttid', errFuture: 'Starttid kan ikke være i fremtiden', errStartEndOrCode: 'Fyll inn start og slutt, eller velg en kode',
+    errBoth: 'Fyll inn både start og slutt', runningFor: 'Har gått i {0}', duration: 'Varighet: {0}', overnight: ' (over midnatt)', dayGives: ' · dagen gir {0} i banken',
+    confirmCancelRun: 'Avbryte økten uten å lagre den?', confirmDelete: 'Slette denne registreringen?', runCancelled: 'Økten ble avbrutt', deleted: 'Slettet',
+    nothingToExport: 'Ingen timer å eksportere', exportN: 'Eksporter {0}', pickOne: 'Velg minst én måned',
+    csvHead: ['Dato', 'Fra', 'Til', 'Timer', 'Kode', 'Dagens +/-', 'Notat'], csvSum: 'Sum {0}', fileAll: 'alle', fileTo: '_til_',
+    importAsk: 'Legge til {0} fra filen?', importBank: '\n\nInngående saldo settes til {0}.', imported: 'Importert {0}', badFile: 'Ugyldig fil',
+    'cloud.ok': '☁ Lagret', 'cloud.syncing': '☁ Lagrer …', 'cloud.error': '⚠ Ikke lagret i sky', 'cloud.out': 'Logg inn', 'cloud.offline': '☁ Frakoblet', 'cloud.off': '☁ …',
+    accNotSetUp: 'Skylagring er ikke satt opp ennå. Følg oppskriften i <b>OPPSETT.md</b>, så kan du logge inn med Google og få timene lagret trygt i skyen.',
+    accOffline: 'Ingen nettforbindelse. Timene lagres på telefonen og synkroniseres når du er på nett igjen.',
+    accLoginText: 'Logg inn med Google for å lagre timene i skyen. Da mister du dem ikke selv om du bytter telefon eller nettleserdata slettes.',
+    accLoginBtn: 'Logg inn med Google', accAs: 'Innlogget som {0}', accError: 'Kunne ikke lagre i skyen sist. Prøver igjen ved neste endring.',
+    accLast: 'Sist synkronisert kl. {0}', accSyncing: 'Synkroniserer …', logout: 'Logg ut', confirmLogout: 'Logge ut? Timene blir liggende på telefonen.',
+    loginFailed: 'Innlogging feilet: {0}', notRunning: 'Timeren gikk ikke', autoStopped: 'Stoppet automatisk kl. {0} · {1}',
+    alreadyRunning: 'Timeren går allerede', autoStarted: 'Startet automatisk kl. {0}'
+  },
+  en: {
+    locale: 'en-GB', h: 'h', otherLang: 'NO', otherLangName: 'Bytt til norsk',
+    nouns: { day: ['day', 'days'], otday: ['overtime day', 'overtime days'], aday: ['day off in lieu', 'days off in lieu'],
+      time: ['time', 'times'], sicknote: ['self-certification', 'self-certifications'], month: ['month', 'months'], entry: ['entry', 'entries'] },
+    'title.timer': 'Timer', 'title.log': 'Log', 'title.ot': 'Overtime', 'title.months': 'Months',
+    ready: 'Ready to start', start: 'Start', stop: 'Stop', startedAt: 'Started at {0}', change: 'edit',
+    today: 'Today', thisWeek: 'This week', bank: 'Overtime bank', quickToday: 'Quick entry for today',
+    addManual: '+ Add hours manually', prevMonth: 'Previous month', nextMonth: 'Next month', list: 'List', calendar: 'Calendar',
+    editStart: 'Edit opening balance', otDays: 'Overtime days', aTaken: 'Time off in lieu', sickYear: 'Self-certified this year',
+    codesHelpTitle: 'How the bank is calculated (as in the timesheet)', account: 'Account and cloud storage', data: 'Data',
+    exportCsv: 'Export to spreadsheet (CSV)', backup: 'Back up to file', importFile: 'Import from file', add: 'Add',
+    date: 'Date', code: 'Code', end: 'End', note: 'Note (optional)', notePh: 'E.g. project or client',
+    cancel: 'Cancel', save: 'Save', delete: 'Delete', exportTitle: 'Export to spreadsheet', oneMonth: 'One month',
+    allMonths: 'All months', pickMonths: 'Choose months', monthLbl: 'Month', exportBtn: 'Export',
+    autoTitle: 'Automatic start and stop',
+    autoIntro: 'The phone can start and stop the timer by itself when she arrives at or leaves work, using an automation. She must be signed in with Google both in the app and in the browser.',
+    autoStop: 'Stop:', autoStart: 'Start:', iphoneTitle: 'How to set it up on iPhone',
+    iphoneSteps: '<li>Open the <b>Shortcuts</b> app → <b>Automation</b> → <b>+</b>.</li><li>Choose <b>Leave</b> and search for the workplace (Gimlekollen, Bergtoras vei 120, Kristiansand). A small radius works best.</li><li>Choose <b>Run Immediately</b> and tap <b>Next</b>.</li><li>Add the action <b>Open URLs</b> with the stop address above.</li><li>Optionally add another one with <b>Arrive</b> and the start address.</li>',
+    androidTitle: 'How to set it up on Android',
+    androidText: 'Use an automation app (for example Tasker or MacroDroid) with “leave area” as the trigger and “open URL” as the action, using the addresses above.',
+    'code.X': 'Extra – non-working day / public holiday', 'code.XR': 'Weekend – fixed 10 hours', 'code.A': 'Time off in lieu',
+    'code.S': 'Sick – self-certified', 'code.SM': 'Sick – doctor’s note', 'code.SB': 'Sick child', 'code.F': 'Holiday', 'code.K': 'Course',
+    'code.V': 'Welfare leave', 'code.P': 'Leave of absence', 'code.D': 'Other',
+    'help.X': 'All hours count as plus time. Set automatically on Saturdays and Sundays.', 'help.XR': 'Always adds 10 hours.',
+    'help.A': 'Deducts a normal working day from the bank.', 'help.abs': 'Absence. Does not affect the bank.', 'help.none': 'Does not affect the bank.',
+    'hol.autumn': 'Autumn break', 'hol.christmas': 'Christmas holiday', 'hol.winter': 'Winter break', 'hol.easter': 'Easter holiday', 'hol.summer': 'Summer holiday',
+    holEnjoy: n => 'Enjoy your ' + n.toLowerCase() + '!', holUntil: 'Lasts until {0}', holUntilSchool: 'Lasts until school starts in August',
+    holIn: (n, d) => n + ' in ' + d, holFrom: 'From {0}', holShort: 'holiday',
+    'preset.helg': 'Weekend', 'preset.dag': 'Normal workday', 'preset.syk': 'Sick – self-certified', 'preset.avsp': 'Time off in lieu',
+    presetDagSub: '{0} · −10 min to the bank', allDay: 'all day', presetAvspSub: 'A · −{0} from the bank',
+    saved: 'Saved', savedDur: 'Saved: {0}', registered: 'Added: {0}', undone: 'Undone', undo: 'Undo', couldNotSave: 'Could not save',
+    forgotTitle: 'Did you forget to stop the timer?', forgotText: 'It was started {0} at {1} and has been running for {2}.', forgotFix: 'Stop and fix the end time',
+    forgotToast: 'Set the correct end time and tap Save',
+    noHours: 'No hours', bankWord: 'bank', noHoursMonth: 'No hours recorded this month.', wholeDay: 'All day', ongoing: 'running',
+    addOther: '+ Add other times or codes', tapDate: 'Tap a date to view or edit the hours.',
+    bankPrompt: 'Opening balance of the overtime bank (hours:minutes, put a minus in front for a negative balance)', bankExample: 'Type e.g. 21:24', bankUpdated: 'Balance updated',
+    noEntries: 'No entries yet.', sickTitle: 'Self-certified sick days, last 12 months', spreadOver: 'over',
+    sickLeft: 'Under the main rule you have {0} left.', sickNone: 'You have used all four self-certifications under the main rule.',
+    sickRule: 'The main rule is self-certification for up to 3 days at a time, 4 times within 12 months. Many employers have agreements allowing more days, so check what applies to you.',
+    absence: 'Absence {0}', helpNormal: 'Normal workday: hours above or below the normal day (6:30, or 5:30 from May to August) count as plus or minus.',
+    helpAbs: 'Sickness, holiday, courses and leave do not affect the bank.', monthsEmpty: 'Once you have recorded hours, you will see a monthly overview here.',
+    noCode: 'No code (normal work)', sheetLive: 'Running session', sheetEdit: 'Edit entry', sheetNew: 'New entry', cancelRun: 'Discard the session without saving',
+    errDate: 'Enter a date', errStart: 'Enter a start time', errFuture: 'Start time cannot be in the future', errStartEndOrCode: 'Enter start and end, or choose a code',
+    errBoth: 'Enter both start and end', runningFor: 'Running for {0}', duration: 'Duration: {0}', overnight: ' (past midnight)', dayGives: ' · the day gives {0} in the bank',
+    confirmCancelRun: 'Discard the session without saving it?', confirmDelete: 'Delete this entry?', runCancelled: 'Session discarded', deleted: 'Deleted',
+    nothingToExport: 'No hours to export', exportN: 'Export {0}', pickOne: 'Choose at least one month',
+    csvHead: ['Date', 'From', 'To', 'Hours', 'Code', 'Day +/-', 'Note'], csvSum: 'Total {0}', fileAll: 'all', fileTo: '_to_',
+    importAsk: 'Add {0} from the file?', importBank: '\n\nThe opening balance will be set to {0}.', imported: 'Imported {0}', badFile: 'Invalid file',
+    'cloud.ok': '☁ Saved', 'cloud.syncing': '☁ Saving …', 'cloud.error': '⚠ Not saved to cloud', 'cloud.out': 'Sign in', 'cloud.offline': '☁ Offline', 'cloud.off': '☁ …',
+    accNotSetUp: 'Cloud storage is not set up yet. Follow the guide in <b>OPPSETT.md</b> to sign in with Google and keep the hours safe in the cloud.',
+    accOffline: 'No internet connection. Hours are saved on the phone and synced when you are back online.',
+    accLoginText: 'Sign in with Google to save the hours in the cloud, so they are not lost if you change phones or browser data is cleared.',
+    accLoginBtn: 'Sign in with Google', accAs: 'Signed in as {0}', accError: 'Could not save to the cloud last time. Will retry on the next change.',
+    accLast: 'Last synced at {0}', accSyncing: 'Syncing …', logout: 'Sign out', confirmLogout: 'Sign out? The hours stay on the phone.',
+    loginFailed: 'Sign-in failed: {0}', notRunning: 'The timer was not running', autoStopped: 'Stopped automatically at {0} · {1}',
+    alreadyRunning: 'The timer is already running', autoStarted: 'Started automatically at {0}'
+  }
+};
+let lang = 'nb';
+try { lang = localStorage.getItem('timelogg.lang') === 'en' ? 'en' : 'nb'; } catch (e) {}
+// t('nøkkel', a, b) setter inn argumentene i {0}, {1} …; funksjonsverdier kalles med argumentene
+function t(key, ...args) {
+  const v = I18N[lang][key] ?? I18N.nb[key] ?? key;
+  return typeof v === 'function' ? v(...args) : typeof v === 'string' ? v.replace(/\{(\d)\}/g, (_, i) => args[i]) : v;
+}
+const pl = (n, noun) => n + ' ' + I18N[lang].nouns[noun][n === 1 ? 0 : 1];
+const LOC = () => I18N[lang].locale;
+function applyLang() {
+  document.documentElement.lang = lang === 'en' ? 'en' : 'nb';
+  document.querySelectorAll('[data-t]').forEach(el => { el.textContent = t(el.dataset.t); });
+  document.querySelectorAll('[data-th]').forEach(el => { el.innerHTML = t(el.dataset.th); });
+  document.querySelectorAll('[data-tp]').forEach(el => { el.placeholder = t(el.dataset.tp); });
+  document.querySelectorAll('[data-ta]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.ta)); });
+  $('lang').textContent = t('otherLang');
+  $('lang').title = t('otherLangName');
+  $('lang').setAttribute('aria-label', t('otherLangName'));
+}
+
 // ---------- Koder (fra arbeidstidsskjemaet) ----------
 // kind: plus = gir pluss-tid, minus = trekkes fra banken, abs = fravær (påvirker ikke banken)
+// Navn og forklaring hentes fra språkfilen: code.X / help.X
 const CODES = {
-  X:  { label: 'Ekstra – ikke arbeidsdag / helligdag', kind: 'plus', help: 'Alle timene gir pluss-tid. Settes automatisk på lørdag og søndag.' },
-  XR: { label: 'Helg – fast 10 timer', kind: 'plus', help: 'Gir alltid 10 timer i pluss.' },
-  A:  { label: 'Avspasering', kind: 'minus', help: 'Trekker en normal arbeidsdag fra banken.' },
-  S:  { label: 'Syk – egenmelding', kind: 'abs', help: 'Fravær. Påvirker ikke banken.' },
-  SM: { label: 'Syk – sykemelding', kind: 'abs', help: 'Fravær. Påvirker ikke banken.' },
-  SB: { label: 'Sykt barn', kind: 'abs', help: 'Fravær. Påvirker ikke banken.' },
-  F:  { label: 'Ferie', kind: 'abs', help: 'Fravær. Påvirker ikke banken.' },
-  K:  { label: 'Kurs', kind: 'abs', help: 'Påvirker ikke banken.' },
-  V:  { label: 'Velferdspermisjon', kind: 'abs', help: 'Fravær. Påvirker ikke banken.' },
-  P:  { label: 'Permisjon', kind: 'abs', help: 'Fravær. Påvirker ikke banken.' },
-  D:  { label: 'Annet', kind: 'abs', help: 'Påvirker ikke banken.' }
+  X:  { kind: 'plus', help: 'X' }, XR: { kind: 'plus', help: 'XR' }, A: { kind: 'minus', help: 'A' },
+  S:  { kind: 'abs', help: 'abs' }, SM: { kind: 'abs', help: 'abs' }, SB: { kind: 'abs', help: 'abs' }, F: { kind: 'abs', help: 'abs' },
+  K:  { kind: 'abs', help: 'none' }, V: { kind: 'abs', help: 'abs' }, P: { kind: 'abs', help: 'abs' }, D: { kind: 'abs', help: 'none' }
 };
+const codeLabel = c => t('code.' + c);
+const codeHelp = c => t('help.' + CODES[c].help);
 const XR_HOURS = 10 * H;
 
 // Skoleferier i Kristiansand, fra den interkommunale skoleruta 2026–2027 (helgene rundt er tatt med).
 // Legg inn neste skoleår når kommunen publiserer det. Sommerferiens slutt er foreløpig anslått.
 const SCHOOL_HOLIDAYS = [
-  { name: 'Høstferie', from: '2026-09-26', to: '2026-10-04' },
-  { name: 'Juleferie', from: '2026-12-19', to: '2027-01-04' },
-  { name: 'Vinterferie', from: '2027-02-20', to: '2027-02-28' },
-  { name: 'Påskeferie', from: '2027-03-20', to: '2027-03-30' },
-  { name: 'Sommerferie', from: '2027-06-19', to: '2027-08-15', approx: true }
+  { name: 'autumn', from: '2026-09-26', to: '2026-10-04' },
+  { name: 'christmas', from: '2026-12-19', to: '2027-01-04' },
+  { name: 'winter', from: '2027-02-20', to: '2027-02-28' },
+  { name: 'easter', from: '2027-03-20', to: '2027-03-30' },
+  { name: 'summer', from: '2027-06-19', to: '2027-08-15', approx: true }
 ];
-const HOLIDAY_ICON = { 'Høstferie': '🍂', 'Juleferie': '🎄', 'Vinterferie': '⛷️', 'Påskeferie': '🐣', 'Sommerferie': '☀️' };
+const HOLIDAY_ICON = { autumn: '🍂', christmas: '🎄', winter: '⛷️', easter: '🐣', summer: '☀️' };
+const holName = h => t('hol.' + h.name);
 const holidayOf = k => SCHOOL_HOLIDAYS.find(h => k >= h.from && k <= h.to);
 const FORGOT_AFTER = 10 * H; // varsel om glemt stopp når timeren har gått så lenge, eller siden en tidligere dag
 // Normal arbeidsdag: 6:30 (1. september – 30. april), 5:30 (1. mai – 31. august)
@@ -628,7 +759,7 @@ function load() {
   try { return normalize(JSON.parse(localStorage.getItem(KEY))); } catch (e) { return blank(); }
 }
 function saveLocal() {
-  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { toast('Kunne ikke lagre'); }
+  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { toast(t('couldNotSave')); }
 }
 function save() { saveLocal(); cloud.push(); }
 
@@ -677,10 +808,10 @@ function mergeStates(a, b) {
 // ---------- Formattering ----------
 const pad = n => String(n).padStart(2, '0');
 // Varighet vises som «6 t 50 min» (eller «6 t» / «50 min» når den ene delen er 0)
-const hm = ms => { const m = Math.round(Math.max(0, ms) / 60000), h = Math.floor(m / 60), r = m % 60; return h && r ? h + ' t ' + r + ' min' : h || !r ? h + ' t' : r + ' min'; };
+const hm = ms => { const m = Math.round(Math.max(0, ms) / 60000), h = Math.floor(m / 60), r = m % 60; const u = t('h'); return h && r ? h + ' ' + u + ' ' + r + ' min' : h || !r ? h + ' ' + u : r + ' min'; };
 const hmc = ms => { const m = Math.round(Math.max(0, ms) / 60000); return Math.floor(m / 60) + ':' + pad(m % 60); }; // 6:50, til regneark
 // Kalenderruter er smale: timer og minutter på hver sin linje
-const hmCal = ms => { const m = Math.round(ms / 60000), h = Math.floor(m / 60), r = m % 60; return (h ? h + ' t' : '') + (h && r ? '<br>' : '') + (r ? r + ' min' : ''); };
+const hmCal = ms => { const m = Math.round(ms / 60000), h = Math.floor(m / 60), r = m % 60; return (h ? h + ' ' + t('h') : '') + (h && r ? '<br>' : '') + (r ? r + ' min' : ''); };
 const shm = ms => (ms < 0 ? '−' : '+') + hm(Math.abs(ms)); // med fortegn
 const hms = ms => { const s = Math.floor(Math.max(0, ms) / 1000); return Math.floor(s / 3600) + ':' + pad(Math.floor(s / 60) % 60) + ':' + pad(s % 60); };
 
@@ -689,14 +820,14 @@ const clock = t => { const d = new Date(t); return pad(d.getHours()) + ':' + pad
 const isoDate = t => { const d = new Date(t); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
 const mKey = t => { const d = new Date(t); return d.getFullYear() + '-' + pad(d.getMonth() + 1); };
 const keyDate = k => { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d || 1); };
-const mName = k => keyDate(k).toLocaleDateString('nb-NO', { month: 'long', year: 'numeric' });
-const mOnly = k => keyDate(k).toLocaleDateString('nb-NO', { month: 'long' });
-const dayName = k => keyDate(k).toLocaleDateString('nb-NO', { weekday: 'long', day: 'numeric', month: 'short' });
-const shortDay = k => keyDate(k).toLocaleDateString('nb-NO', { weekday: 'short', day: 'numeric' });
+const mName = k => keyDate(k).toLocaleDateString(LOC(), { month: 'long', year: 'numeric' });
+const mOnly = k => keyDate(k).toLocaleDateString(LOC(), { month: 'long' });
+const dayName = k => keyDate(k).toLocaleDateString(LOC(), { weekday: 'long', day: 'numeric', month: 'short' });
+const shortDay = k => keyDate(k).toLocaleDateString(LOC(), { weekday: 'short', day: 'numeric' });
+const shortMonth = k => keyDate(k).toLocaleDateString(LOC(), { month: 'short' });
 const isWeekend = k => { const w = keyDate(k).getDay(); return w === 0 || w === 6; };
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const dur = e => e.allDay ? 0 : (e.end ?? now()) - e.start;
-const plural = (n, one, many) => n + ' ' + (n === 1 ? one : many);
 const badge = c => c ? `<span class="code ${CODES[c].kind}">${c}</span>` : '';
 const deltaHtml = ms => `<span class="delta ${ms > 0 ? 'pos' : ms < 0 ? 'neg' : ''}">${shm(ms)}</span>`;
 
@@ -757,14 +888,13 @@ function computeBank() {
 }
 
 // ---------- Navigasjon ----------
-const titles = { timer: 'Timer', log: 'Logg', ot: 'Overtid', months: 'Måneder' };
 let view = 'timer';
 function go(v) {
   view = v;
   document.body.dataset.view = v;
   document.querySelectorAll('.view').forEach(s => s.classList.toggle('active', s.id === 'view-' + v));
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active', b.dataset.go === v));
-  $('title').textContent = titles[v];
+  $('title').textContent = t('title.' + v);
   render();
   window.scrollTo(0, 0);
 }
@@ -777,7 +907,7 @@ $('toggle').addEventListener('click', () => {
     const e = addEntry({ start: state.running.start, end: now(), note: state.running.note || '', code: isWeekend(k) ? 'X' : '' });
     setRunning(null);
     save();
-    toast('Lagret: ' + long(e.end - e.start));
+    toast(t('savedDur', long(e.end - e.start)));
   } else {
     setRunning({ start: now(), note: '' });
     save();
@@ -790,10 +920,10 @@ $('fab').addEventListener('click', () => openSheet(null, logMode === 'cal' ? sel
 
 // Hurtigknapper: registrerer en ferdig økt eller en kode på valgt dato
 const PRESETS = {
-  helg: { name: 'Helg', cls: 'q-plus', sub: () => 'XR · 10 t' },
-  dag:  { name: 'Vanlig arbeidsdag', cls: '', sub: k => '08:00–' + clock(at8(k) + workDay(k)) + ' · −0:10 i banken' },
-  syk:  { name: 'Syk – egenmelding', cls: 'q-abs', sub: () => 'S · hele dagen' },
-  avsp: { name: 'Avspasering', cls: '', sub: k => 'A · −' + hm(normalDay(k)) + ' fra banken' }
+  helg: { cls: 'q-plus', sub: () => 'XR · ' + hm(XR_HOURS) },
+  dag:  { cls: '', sub: k => t('presetDagSub', '08:00–' + clock(at8(k) + workDay(k))) },
+  syk:  { cls: 'q-abs', sub: () => 'S · ' + t('allDay') },
+  avsp: { cls: '', sub: k => t('presetAvspSub', hm(normalDay(k))) }
 };
 function presetEntry(key, k) {
   const t0 = keyDate(k).getTime();
@@ -806,27 +936,27 @@ function addPreset(key, k) {
   const e = addEntry(presetEntry(key, k));
   save(); render();
   if (navigator.vibrate) navigator.vibrate(15);
-  const what = e.allDay ? CODES[e.code].label : hm(e.end - e.start);
-  toast('Registrert: ' + what + (k === isoDate(now()) ? '' : ' ' + shortDay(k)), () => {
-    removeEntry(e.id); save(); render(); toast('Angret');
+  const what = e.allDay ? codeLabel(e.code) : hm(e.end - e.start);
+  toast(t('registered', what) + (k === isoDate(now()) ? '' : ' ' + shortDay(k)), () => {
+    removeEntry(e.id); save(); render(); toast(t('undone'));
   });
 }
 function presetButtons(k, short) {
   return Object.entries(PRESETS).map(([key, p]) =>
-    short ? `<button class="${p.cls}" data-preset="${key}">+ ${p.name}</button>`
-          : `<button class="${p.cls}" data-preset="${key}"><b>${p.name}</b><small>${esc(p.sub(k))}</small></button>`).join('');
+    short ? `<button class="${p.cls}" data-preset="${key}">+ ${t('preset.' + key)}</button>`
+          : `<button class="${p.cls}" data-preset="${key}"><b>${t('preset.' + key)}</b><small>${esc(p.sub(k))}</small></button>`).join('');
 }
 
 function renderTimer() {
   const run = state.running;
   $('clock').classList.toggle('running', !!run);
-  $('toggle').textContent = run ? 'Stopp' : 'Start';
+  $('toggle').textContent = run ? t('stop') : t('start');
   $('time').textContent = run ? hms(now() - run.start) : '0:00:00';
   if (run) {
-    $('status').innerHTML = 'Startet kl. ' + clock(run.start) + ' · <button id="edit-run">endre</button>';
+    $('status').innerHTML = esc(t('startedAt', clock(run.start))) + ' · <button id="edit-run">' + t('change') + '</button>';
     $('edit-run').addEventListener('click', () => openSheet('live'));
   } else {
-    $('status').textContent = 'Klar til å starte';
+    $('status').textContent = t('ready');
   }
   const d = new Date();
   const Y = d.getFullYear(), M = d.getMonth(), D = d.getDate(), wd = (d.getDay() + 6) % 7; // wd: 0 = mandag
@@ -844,21 +974,21 @@ function renderTimer() {
   $('forgot').hidden = !forgot;
   if (forgot) {
     // Knappen tegnes bare når økten endres, ikke hvert sekund; teksten oppdateres
-    if ($('forgot').dataset.start !== String(run.start)) {
-      $('forgot').innerHTML = '<b>Glemte du å stoppe timeren?</b><p></p><button data-fix>Stopp og rett sluttiden</button>';
-      $('forgot').dataset.start = run.start;
+    if ($('forgot').dataset.start !== run.start + lang) {
+      $('forgot').innerHTML = `<b>${t('forgotTitle')}</b><p></p><button data-fix>${t('forgotFix')}</button>`;
+      $('forgot').dataset.start = run.start + lang;
     }
-    $('forgot').querySelector('p').textContent = `Den ble startet ${dayName(isoDate(run.start))} kl. ${clock(run.start)} og har gått i ${hm(now() - run.start)}.`;
+    $('forgot').querySelector('p').textContent = t('forgotText', dayName(isoDate(run.start)), clock(run.start), hm(now() - run.start));
   }
 
   // Nedtelling til neste skoleferie
   const hol = holidayOf(today), next = SCHOOL_HOLIDAYS.find(h => h.from > today);
   let fh = '';
   if (hol) {
-    fh = `<span class="ico">${HOLIDAY_ICON[hol.name] || '🌴'}</span><div><b>God ${hol.name.toLowerCase()}!</b><span>${hol.approx ? 'Varer til skolestart i august' : 'Varer til og med ' + esc(dayName(hol.to))}</span></div>`;
+    fh = `<span class="ico">${HOLIDAY_ICON[hol.name] || '🌴'}</span><div><b>${esc(t('holEnjoy', holName(hol)))}</b><span>${hol.approx ? t('holUntilSchool') : esc(t('holUntil', dayName(hol.to)))}</span></div>`;
   } else if (next) {
     const n = Math.round((keyDate(next.from) - keyDate(today)) / DAY);
-    fh = `<span class="ico">${HOLIDAY_ICON[next.name] || '🌴'}</span><div><b>${next.name} om ${plural(n, 'dag', 'dager')}</b><span>Fra ${esc(dayName(next.from))}</span></div>`;
+    fh = `<span class="ico">${HOLIDAY_ICON[next.name] || '🌴'}</span><div><b>${esc(t('holIn', holName(next), pl(n, 'day')))}</b><span>${esc(t('holFrom', dayName(next.from)))}</span></div>`;
   }
   $('ferie').innerHTML = fh;
   $('ferie').hidden = !fh;
@@ -869,7 +999,7 @@ $('forgot').addEventListener('click', ev => {
   const e = addEntry({ start: state.running.start, end: now(), note: state.running.note || '', code: isWeekend(k) ? 'X' : '' });
   setRunning(null); save(); render();
   openSheet(e.id);
-  toast('Sett riktig sluttid og trykk Lagre');
+  toast(t('forgotToast'));
 });
 
 // ---------- Logg ----------
@@ -897,12 +1027,12 @@ function renderLog() {
   days.forEach((es, k) => { delta += dayDelta(k, es); });
   $('m-name').textContent = mName(month);
   $('m-sum').textContent = hm(total);
-  $('m-sum2').innerHTML = list.length ? plural(days.size, 'dag', 'dager') + ' · bank ' + deltaHtml(delta) : 'Ingen timer';
+  $('m-sum2').innerHTML = list.length ? pl(days.size, 'day') + ' · ' + t('bankWord') + ' ' + deltaHtml(delta) : t('noHours');
   $('next').disabled = month >= mKey(now());
   document.querySelectorAll('.seg button').forEach(b => b.classList.toggle('active', b.dataset.mode === logMode));
 
   if (logMode === 'cal') { renderCalendar(days); return; }
-  if (!list.length) { $('log-list').innerHTML = '<div class="empty">Ingen registrerte timer denne måneden.</div>'; return; }
+  if (!list.length) { $('log-list').innerHTML = `<div class="empty">${t('noHoursMonth')}</div>`; return; }
   let html = '';
   days.forEach((es, k) => { html += dayBlock(k, es); });
   $('log-list').innerHTML = html;
@@ -916,7 +1046,7 @@ function dayBlock(k, es) {
   es.forEach(e => {
     const live = e.end === null;
     const code = e.code || (isWeekend(k) && !e.allDay ? 'X' : '');
-    const span = e.allDay ? esc(CODES[e.code] ? CODES[e.code].label : 'Hele dagen') : clock(e.start) + ' – ' + (live ? 'pågår' : clock(e.end));
+    const span = e.allDay ? esc(CODES[e.code] ? codeLabel(e.code) : t('wholeDay')) : clock(e.start) + ' – ' + (live ? t('ongoing') : clock(e.end));
     html += `<button class="entry${live ? ' live' : ''}" data-id="${e.id}">
       <div class="grow"><div class="span">${span}${e.allDay ? '' : badge(code)}</div>${e.note ? `<div class="note">${esc(e.note)}</div>` : ''}</div>
       <div class="dur">${e.allDay ? badge(e.code) : hm(dur(e))}</div><div class="chev">›</div></button>`;
@@ -936,7 +1066,9 @@ function renderCalendar(days) {
   const today = isoDate(now());
   if (!selDay || selDay.slice(0, 7) !== month) selDay = month === mKey(now()) ? today : null;
 
-  let html = '<div class="cal"><div class="wd">' + ['man', 'tir', 'ons', 'tor', 'fre', 'lør', 'søn'].map(d => `<span>${d}</span>`).join('') + '</div><div class="grid">';
+  // Ukedager fra mandag, på valgt språk (5. januar 2026 er en mandag)
+  const wds = [...Array(7)].map((_, i) => new Date(2026, 0, 5 + i).toLocaleDateString(LOC(), { weekday: 'short' }).replace('.', ''));
+  let html = '<div class="cal"><div class="wd">' + wds.map(d => `<span>${d}</span>`).join('') + '</div><div class="grid">';
   for (let i = 0; i < lead; i++) html += '<span></span>';
   for (let d = 1; d <= count; d++) {
     const k = month + '-' + pad(d);
@@ -946,18 +1078,18 @@ function renderCalendar(days) {
     const kind = dayKind(codes);
     const hol = holidayOf(k);
     const cls = [es ? 'has' : '', kind ? 'k-' + kind : '', hol ? 'hol' : '', k === today ? 'today' : '', k === selDay ? 'sel' : '', k > today ? 'future' : ''].join(' ');
-    html += `<button class="${cls}" data-day="${k}"${hol ? ` title="${hol.name}"` : ''}><b>${d}</b><small>${sum ? hmCal(sum) : ''}</small><i>${codes.length ? codes.join(' ') : hol ? 'ferie' : ''}</i></button>`;
+    html += `<button class="${cls}" data-day="${k}"${hol ? ` title="${esc(holName(hol))}"` : ''}><b>${d}</b><small>${sum ? hmCal(sum) : ''}</small><i>${codes.length ? codes.join(' ') : hol ? t('holShort') : ''}</i></button>`;
   }
   html += '</div></div>';
 
   if (selDay) {
     const es = days.get(selDay);
     html += es ? dayBlock(selDay, es)
-      : `<div class="day"><div class="dayhead"><span>${esc(dayName(selDay))}</span><span>0:00</span></div></div>`;
+      : `<div class="day"><div class="dayhead"><span>${esc(dayName(selDay))}</span><span>${hm(0)}</span></div></div>`;
     html += `<div class="dayquick">${presetButtons(selDay, true)}</div>`;
-    html += `<button class="ghost" id="add-day">+ Legg til andre tider eller koder</button>`;
+    html += `<button class="ghost" id="add-day">${t('addOther')}</button>`;
   } else {
-    html += '<div class="empty">Trykk på en dato for å se eller endre timene.</div>';
+    html += `<div class="empty">${t('tapDate')}</div>`;
   }
   $('log-list').innerHTML = html;
   bindEntries();
@@ -969,14 +1101,14 @@ function renderCalendar(days) {
 // ---------- Overtid ----------
 $('ot-start').addEventListener('click', () => {
   const cur = state.settings.bankStart, neg = cur < 0, a = Math.abs(cur);
-  const v = prompt('Inngående saldo i overtidsbanken (timer:minutter, bruk minus foran ved minus-saldo)', (neg ? '-' : '') + Math.floor(a / 60) + ':' + pad(a % 60));
+  const v = prompt(t('bankPrompt'), (neg ? '-' : '') + Math.floor(a / 60) + ':' + pad(a % 60));
   if (v === null) return;
   const m = v.trim().replace('−', '-').match(/^(-?)(\d+)(?:[:.](\d{1,2}))?$/);
-  if (!m) { toast('Skriv f.eks. 21:24'); return; }
+  if (!m) { toast(t('bankExample')); return; }
   const mins = +m[2] * 60 + (+m[3] || 0);
   state.settings = { ...state.settings, bankStart: m[1] ? -mins : mins };
   state.settingsMod = now();
-  save(); render(); toast('Saldo oppdatert');
+  save(); render(); toast(t('bankUpdated'));
 });
 
 function renderOvertime() {
@@ -985,7 +1117,7 @@ function renderOvertime() {
   $('ot-bank-sub').textContent = '';
   const y = String(new Date().getFullYear());
   $('ot-days').textContent = b.otDays.length;
-  $('ot-a').textContent = plural(b.aDays.length, 'dag', 'dager');
+  $('ot-a').textContent = pl(b.aDays.length, 'day');
   $('ot-s').textContent = (b.abs.get('S') || []).filter(k => k.startsWith(y)).length;
 
   const keys = [...b.months.keys()].sort().reverse();
@@ -994,7 +1126,7 @@ function renderOvertime() {
     const yr = k.slice(0, 4);
     if (yr !== year) {
       if (year) html += '</div>';
-      html += `<div class="yearhead"><span>${yr}</span><span>${plural(b.otDays.filter(d => d.startsWith(yr)).length, 'overtidsdag', 'overtidsdager')}</span></div><div class="entries">`;
+      html += `<div class="yearhead"><span>${yr}</span><span>${pl(b.otDays.filter(d => d.startsWith(yr)).length, 'otday')}</span></div><div class="entries">`;
       year = yr;
     }
     const o = b.months.get(k);
@@ -1005,10 +1137,10 @@ function renderOvertime() {
     ].join('');
     html += `<button class="mrow" data-m="${k}">
       <div class="top"><span class="mn">${esc(mOnly(k))}</span>${deltaHtml(o.delta)}</div>
-      <div class="meta">${plural(o.ot.length, 'overtidsdag', 'overtidsdager')}${o.a.length ? ' · ' + plural(o.a.length, 'avspaseringsdag', 'avspaseringsdager') : ''}</div>
+      <div class="meta">${pl(o.ot.length, 'otday')}${o.a.length ? ' · ' + pl(o.a.length, 'aday') : ''}</div>
       ${chips ? `<div class="chips">${chips}</div>` : ''}</button>`;
   });
-  $('ot-list').innerHTML = keys.length ? html + '</div>' : '<div class="empty">Ingen registreringer ennå.</div>';
+  $('ot-list').innerHTML = keys.length ? html + '</div>' : `<div class="empty">${t('noEntries')}</div>`;
 
   // Egenmelding siste 12 måneder. Dager som henger sammen (også over en helg) teller som én gang.
   const today = isoDate(now());
@@ -1025,23 +1157,23 @@ function renderOvertime() {
     if (joined) last.push(k); else periods.push([k]);
   });
   const left = Math.max(0, 4 - periods.length);
-  $('sick-box').innerHTML = `<h2>Egenmelding siste 12 måneder</h2><div class="account sick">
-    <p><b class="count">${plural(sDays.length, 'dag', 'dager')}</b> fordelt på <b>${plural(periods.length, 'gang', 'ganger')}</b></p>
-    ${periods.length ? `<div class="chips" style="margin:0 0 12px">${periods.map(p => `<span class="abs">${esc(shortDay(p[0]))}${p.length > 1 ? '–' + esc(shortDay(p[p.length - 1])) : ''} ${esc(mOnly(p[0]).slice(0, 3))}.</span>`).join('')}</div>` : ''}
-    <p class="${left <= 1 ? 'warn' : ''}">${left ? 'Etter hovedregelen har du ' + plural(left, 'egenmelding', 'egenmeldinger') + ' igjen.' : 'Du har brukt alle fire egenmeldingene etter hovedregelen.'}</p>
-    <p>Hovedregelen er egenmelding inntil 3 dager om gangen, 4 ganger i løpet av 12 måneder. Mange arbeidsgivere har avtale om flere dager, så sjekk hva som gjelder for deg.</p></div>`;
+  $('sick-box').innerHTML = `<h2>${t('sickTitle')}</h2><div class="account sick">
+    <p><b class="count">${pl(sDays.length, 'day')}</b> ${t('spreadOver')} <b>${pl(periods.length, 'time')}</b></p>
+    ${periods.length ? `<div class="chips" style="margin:0 0 12px">${periods.map(p => `<span class="abs">${esc(shortDay(p[0]))}${p.length > 1 ? '–' + esc(shortDay(p[p.length - 1])) : ''} ${esc(shortMonth(p[0]))}</span>`).join('')}</div>` : ''}
+    <p class="${left <= 1 ? 'warn' : ''}">${left ? esc(t('sickLeft', pl(left, 'sicknote'))) : t('sickNone')}</p>
+    <p>${t('sickRule')}</p></div>`;
   $('ot-list').querySelectorAll('.mrow').forEach(el => el.addEventListener('click', () => { month = el.dataset.m; go('log'); }));
 
   // Fravær i år, som i arket
   const absRows = Object.keys(CODES).filter(c => CODES[c].kind === 'abs')
     .map(c => [c, (b.abs.get(c) || []).filter(k => k.startsWith(y)).length]).filter(([, n]) => n);
-  $('abs-box').innerHTML = absRows.length ? `<h2>Fravær ${y}</h2><div class="entries">` +
-    absRows.map(([c, n]) => `<div class="absrow"><span>${badge(c)} ${esc(CODES[c].label)}</span><b>${plural(n, 'dag', 'dager')}</b></div>`).join('') + '</div>' : '';
+  $('abs-box').innerHTML = absRows.length ? `<h2>${t('absence', y)}</h2><div class="entries">` +
+    absRows.map(([c, n]) => `<div class="absrow"><span>${badge(c)} ${esc(codeLabel(c))}</span><b>${pl(n, 'day')}</b></div>`).join('') + '</div>' : '';
 
   $('codes-help').innerHTML =
-    `<div><span class="code" style="background:var(--warm)">–</span><span>Vanlig arbeidsdag: timer over eller under normaldagen (6:30, eller 5:30 fra mai til august) gir pluss eller minus.</span></div>` +
-    Object.entries(CODES).filter(([, c]) => c.kind !== 'abs').map(([k, c]) => `<div>${badge(k)}<span><b>${esc(c.label)}.</b> ${esc(c.help)}</span></div>`).join('') +
-    `<div><span class="code abs">S …</span><span>Sykdom, ferie, kurs og permisjon påvirker ikke banken.</span></div>`;
+    `<div><span class="code" style="background:var(--warm)">–</span><span>${t('helpNormal')}</span></div>` +
+    Object.entries(CODES).filter(([, c]) => c.kind !== 'abs').map(([k]) => `<div>${badge(k)}<span><b>${esc(codeLabel(k))}.</b> ${esc(codeHelp(k))}</span></div>`).join('') +
+    `<div><span class="code abs">S …</span><span>${t('helpAbs')}</span></div>`;
 }
 
 // ---------- Måneder ----------
@@ -1056,7 +1188,7 @@ function renderMonths() {
   });
   const keys = [...byMonth.keys()].sort().reverse();
   renderAccount();
-  if (!keys.length) { $('month-list').innerHTML = '<div class="empty">Når du har registrert timer, ser du oversikten per måned her.</div>'; return; }
+  if (!keys.length) { $('month-list').innerHTML = `<div class="empty">${t('monthsEmpty')}</div>`; return; }
   const max = Math.max(...keys.map(k => byMonth.get(k).ms));
   let html = '', year = null;
   keys.forEach(k => {
@@ -1071,7 +1203,7 @@ function renderMonths() {
     html += `<button class="mrow" data-m="${k}">
       <div class="top"><span class="mn">${esc(mOnly(k))}</span><span class="mh">${hm(o.ms)}</span></div>
       <div class="bar"><i style="width:${max ? (o.ms / max * 100).toFixed(1) : 0}%"></i></div>
-      <div class="meta">${plural(o.days.size, 'dag', 'dager')}${bm ? ' · bank ' + deltaHtml(bm.delta) : ''}</div></button>`;
+      <div class="meta">${pl(o.days.size, 'day')}${bm ? ' · ' + t('bankWord') + ' ' + deltaHtml(bm.delta) : ''}</div></button>`;
   });
   $('month-list').innerHTML = html + '</div>';
   $('month-list').querySelectorAll('.mrow').forEach(el => el.addEventListener('click', () => { month = el.dataset.m; go('log'); }));
@@ -1080,19 +1212,24 @@ function renderMonths() {
 // ---------- Redigering ----------
 const sheet = $('sheet');
 let editing = null; // null = ny, 'live' = pågående, ellers id
-$('f-code').innerHTML = '<option value="">Ingen kode (vanlig arbeid)</option>' +
-  Object.entries(CODES).map(([k, c]) => `<option value="${k}">${k} – ${esc(c.label)}</option>`).join('');
+function fillCodes() {
+  const v = $('f-code').value;
+  $('f-code').innerHTML = `<option value="">${t('noCode')}</option>` +
+    Object.keys(CODES).map(k => `<option value="${k}">${k} – ${esc(codeLabel(k))}</option>`).join('');
+  $('f-code').value = v;
+}
+fillCodes();
 
 function openSheet(id, date) {
   editing = id;
   const isLive = id === 'live';
   const e = isLive ? { start: state.running.start, note: state.running.note || '' }
           : id ? state.entries.find(x => x.id === id) : null;
-  $('sheet-title').textContent = isLive ? 'Pågående økt' : e ? 'Endre registrering' : 'Ny registrering';
+  $('sheet-title').textContent = isLive ? t('sheetLive') : e ? t('sheetEdit') : t('sheetNew');
   $('end-wrap').style.visibility = isLive ? 'hidden' : '';
   $('code-wrap').style.display = isLive ? 'none' : '';
   $('delete').style.display = e ? '' : 'none';
-  $('delete').textContent = isLive ? 'Avbryt økten uten å lagre' : 'Slett';
+  $('delete').textContent = isLive ? t('cancelRun') : t('delete');
   if (e) {
     $('f-date').value = isoDate(e.start);
     $('f-code').value = e.code || '';
@@ -1113,19 +1250,19 @@ function openSheet(id, date) {
 
 function readForm() {
   const date = $('f-date').value, s = $('f-start').value, en = $('f-end').value, code = $('f-code').value;
-  if (!date) return { err: 'Fyll inn dato' };
+  if (!date) return { err: t('errDate') };
   if (editing === 'live') {
-    if (!s) return { err: 'Fyll inn starttid' };
+    if (!s) return { err: t('errStart') };
     const start = new Date(date + 'T' + s).getTime();
-    if (start > now()) return { err: 'Starttid kan ikke være i fremtiden' };
+    if (start > now()) return { err: t('errFuture') };
     return { start };
   }
   const t0 = keyDate(date).getTime();
   if (!s && !en) {
-    if (!code) return { err: 'Fyll inn start og slutt, eller velg en kode' };
+    if (!code) return { err: t('errStartEndOrCode') };
     return { start: t0, end: t0, allDay: true, code };
   }
-  if (!s || !en) return { err: 'Fyll inn både start og slutt' };
+  if (!s || !en) return { err: t('errBoth') };
   const start = new Date(date + 'T' + s).getTime();
   let end = new Date(date + 'T' + en).getTime();
   if (end <= start) end += DAY; // over midnatt
@@ -1136,12 +1273,12 @@ function updatePreview() {
   const r = readForm(), p = $('preview');
   p.classList.toggle('err', !!r.err);
   if (r.err) { p.textContent = r.err; return; }
-  if (editing === 'live') { p.innerHTML = 'Har gått i <b>' + long(now() - r.start) + '</b>'; return; }
+  if (editing === 'live') { p.innerHTML = esc(t('runningFor', '\u0001')).replace('\u0001', '<b>' + long(now() - r.start) + '</b>'); return; }
   const k = $('f-date').value;
   const others = state.entries.filter(x => x.id !== editing && isoDate(x.start) === k);
   const d = dayDelta(k, [...others, { start: r.start, end: r.end, allDay: r.allDay, code: r.code }]);
-  p.innerHTML = (r.allDay ? 'Hele dagen' : 'Varighet: <b>' + long(r.end - r.start) + '</b>' + (r.overnight ? ' (over midnatt)' : '')) +
-    ' · dagen gir ' + deltaHtml(d) + ' i banken';
+  p.innerHTML = (r.allDay ? t('wholeDay') : esc(t('duration', '\u0001')).replace('\u0001', '<b>' + long(r.end - r.start) + '</b>') + (r.overnight ? t('overnight') : '')) +
+    esc(t('dayGives', '\u0001')).replace('\u0001', deltaHtml(d));
 }
 ['f-date', 'f-start', 'f-end', 'f-code'].forEach(id => $(id).addEventListener('input', updatePreview));
 
@@ -1157,17 +1294,17 @@ $('form').addEventListener('submit', ev => {
     else { addEntry(fields); month = mKey(r.start); selDay = isoDate(r.start); }
   }
   save(); sheet.close(); render();
-  toast('Lagret');
+  toast(t('saved'));
 });
 $('cancel').addEventListener('click', () => sheet.close());
 sheet.addEventListener('click', ev => { if (ev.target === sheet) sheet.close(); });
 $('delete').addEventListener('click', () => {
   const live = editing === 'live';
-  if (!confirm(live ? 'Avbryte økten uten å lagre den?' : 'Slette denne registreringen?')) return;
+  if (!confirm(live ? t('confirmCancelRun') : t('confirmDelete'))) return;
   if (live) setRunning(null);
   else removeEntry(editing);
   save(); sheet.close(); render();
-  toast(live ? 'Økten ble avbrutt' : 'Slettet');
+  toast(live ? t('runCancelled') : t('deleted'));
 });
 
 // ---------- Eksport / import ----------
@@ -1190,7 +1327,7 @@ function exportMonths() { return [...new Set(state.entries.map(e => mKey(e.start
 
 $('export-csv').addEventListener('click', () => {
   const months = exportMonths();
-  if (!months.length) { toast('Ingen timer å eksportere'); return; }
+  if (!months.length) { toast(t('nothingToExport')); return; }
   const cur = months.includes(month) ? month : months[0];
   $('ex-month').innerHTML = months.map(k => `<option value="${k}"${k === cur ? ' selected' : ''}>${esc(mName(k))}</option>`).join('');
   $('ex-list').innerHTML = months.map(k => `<label><input type="checkbox" value="${k}"${k === cur ? ' checked' : ''}> <span>${esc(mName(k))}</span></label>`).join('');
@@ -1210,7 +1347,7 @@ function updateExport() {
   $('ex-list').hidden = scope !== 'pick';
   const n = exportSelection().length;
   $('ex-go').disabled = !n;
-  $('ex-go').textContent = n ? 'Eksporter ' + plural(n, 'måned', 'måneder') : 'Velg minst én måned';
+  $('ex-go').textContent = n ? t('exportN', pl(n, 'month')) : t('pickOne');
 }
 exportDlg.addEventListener('change', updateExport);
 $('ex-cancel').addEventListener('click', () => exportDlg.close());
@@ -1220,7 +1357,7 @@ $('export').addEventListener('submit', ev => {
   ev.preventDefault();
   const sel = exportSelection().sort();
   if (!sel.length) return;
-  const rows = [['Dato', 'Fra', 'Til', 'Timer', 'Kode', 'Dagens +/-', 'Notat']];
+  const rows = [t('csvHead')];
   const days = byDay(state.entries);
   sel.forEach(mk => {
     let total = 0, delta = 0;
@@ -1230,11 +1367,11 @@ $('export').addEventListener('submit', ev => {
       es.forEach((e, i) => rows.push([k, e.allDay ? '' : clock(e.start), e.allDay ? '' : clock(e.end), e.allDay ? '' : hmc(dur(e)),
         e.code || (isWeekend(k) && !e.allDay ? 'X' : ''), i === es.length - 1 ? shmc(d) : '', e.note || '']));
     });
-    rows.push(['Sum ' + mName(mk), '', '', hmc(total), '', shmc(delta), '']);
+    rows.push([t('csvSum', mName(mk)), '', '', hmc(total), '', shmc(delta), '']);
     rows.push([]);
   });
   const csv = '﻿' + rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(';')).join('\r\n');
-  const name = sel.length === 1 ? sel[0] : sel.length === exportMonths().length ? 'alle' : sel[0] + '_til_' + sel[sel.length - 1];
+  const name = sel.length === 1 ? sel[0] : sel.length === exportMonths().length ? t('fileAll') : sel[0] + t('fileTo') + sel[sel.length - 1];
   exportDlg.close();
   download('timelogg-' + name + '.csv', csv, 'text/csv');
 });
@@ -1251,16 +1388,16 @@ $('import-file').addEventListener('change', async ev => {
     if (!Array.isArray(data.entries)) throw new Error();
     const have = new Set(state.entries.map(e => e.id));
     const fresh = data.entries.filter(e => e && e.id && !have.has(e.id));
-    const msg = 'Legge til ' + plural(fresh.length, 'registrering', 'registreringer') + ' fra filen?' +
-      (data.settings && typeof data.settings.bankStart === 'number' ? '\n\nInngående saldo settes til ' + shm(data.settings.bankStart * 60000) + '.' : '');
+    const msg = t('importAsk', pl(fresh.length, 'entry')) +
+      (data.settings && typeof data.settings.bankStart === 'number' ? t('importBank', shm(data.settings.bankStart * 60000)) : '');
     if (!confirm(msg)) return;
-    const t = now();
-    fresh.forEach(e => { e.mod = t; delete state.deleted[e.id]; state.entries.push(e); });
+    const stamp = now();
+    fresh.forEach(e => { e.mod = stamp; delete state.deleted[e.id]; state.entries.push(e); });
     if (data.settings && typeof data.settings.bankStart === 'number') {
-      state.settings = { ...state.settings, bankStart: data.settings.bankStart }; state.settingsMod = t;
+      state.settings = { ...state.settings, bankStart: data.settings.bankStart }; state.settingsMod = stamp;
     }
-    save(); render(); toast('Importert ' + plural(fresh.length, 'registrering', 'registreringer'));
-  } catch (e) { toast('Ugyldig fil'); }
+    save(); render(); toast(t('imported', pl(fresh.length, 'entry')));
+  } catch (e) { toast(t('badFile')); }
 });
 
 // ---------- Skylagring med Google-konto (Firebase) ----------
@@ -1274,8 +1411,7 @@ function renderCloud() {
   const b = $('cloud');
   b.hidden = !cloud.configured;
   if (!cloud.configured) return;
-  const t = { ok: '☁ Lagret', syncing: '☁ Lagrer …', error: '⚠ Ikke lagret i sky', out: 'Logg inn', offline: '☁ Frakoblet', off: '☁ …' };
-  b.textContent = t[cloud.status] || '';
+  b.textContent = t('cloud.' + cloud.status);
   b.classList.toggle('err', cloud.status === 'error' || cloud.status === 'out');
 }
 $('cloud').addEventListener('click', () => go('months'));
@@ -1283,22 +1419,22 @@ $('cloud').addEventListener('click', () => go('months'));
 function renderAccount() {
   const el = $('account');
   if (!cloud.configured) {
-    el.innerHTML = '<p>Skylagring er ikke satt opp ennå. Følg oppskriften i <b>OPPSETT.md</b>, så kan du logge inn med Google og få timene lagret trygt i skyen.</p>';
+    el.innerHTML = `<p>${t('accNotSetUp')}</p>`;
     return;
   }
   if (cloud.status === 'offline' && !cloud.user) {
-    el.innerHTML = '<p>Ingen nettforbindelse. Timene lagres på telefonen og synkroniseres når du er på nett igjen.</p>';
+    el.innerHTML = `<p>${t('accOffline')}</p>`;
     return;
   }
   if (!cloud.user) {
-    el.innerHTML = `<p>Logg inn med Google for å lagre timene i skyen. Da mister du dem ikke selv om du bytter telefon eller nettleserdata slettes.</p><button class="gbtn" id="login">${GOOGLE_ICON}Logg inn med Google</button>`;
+    el.innerHTML = `<p>${t('accLoginText')}</p><button class="gbtn" id="login">${GOOGLE_ICON}${t('accLoginBtn')}</button>`;
     $('login').addEventListener('click', () => cloud.signIn());
     return;
   }
-  el.innerHTML = `<p>Innlogget som <b>${esc(cloud.user.email || cloud.user.displayName || '')}</b></p>
-    <p>${cloud.status === 'error' ? 'Kunne ikke lagre i skyen sist. Prøver igjen ved neste endring.' : cloud.last ? 'Sist synkronisert kl. ' + clock(cloud.last) : 'Synkroniserer …'}</p>
-    <button class="linkbtn" id="logout">Logg ut</button>`;
-  $('logout').addEventListener('click', () => { if (confirm('Logge ut? Timene blir liggende på telefonen.')) cloud.signOut(); });
+  el.innerHTML = `<p>${esc(t('accAs', '\u0001')).replace('\u0001', '<b>' + esc(cloud.user.email || cloud.user.displayName || '') + '</b>')}</p>
+    <p>${cloud.status === 'error' ? t('accError') : cloud.last ? t('accLast', clock(cloud.last)) : t('accSyncing')}</p>
+    <button class="linkbtn" id="logout">${t('logout')}</button>`;
+  $('logout').addEventListener('click', () => { if (confirm(t('confirmLogout'))) cloud.signOut(); });
 }
 
 async function initCloud() {
@@ -1321,11 +1457,11 @@ async function initCloud() {
     catch (e) {
       if (['auth/popup-blocked', 'auth/operation-not-supported-in-this-environment', 'auth/cancelled-popup-request'].includes(e.code)) {
         await AU.signInWithRedirect(auth, provider);
-      } else if (e.code !== 'auth/popup-closed-by-user') toast('Innlogging feilet: ' + (e.code || e.message));
+      } else if (e.code !== 'auth/popup-closed-by-user') toast(t('loginFailed', e.code || e.message));
     }
   };
   cloud.signOut = () => AU.signOut(auth);
-  AU.getRedirectResult(auth).catch(e => toast('Innlogging feilet: ' + (e.code || e.message)));
+  AU.getRedirectResult(auth).catch(e => toast(t('loginFailed', e.code || e.message)));
 
   const pick = s => ({ entries: s.entries, running: s.running, runningMod: s.runningMod, deleted: s.deleted, settings: s.settings, settingsMod: s.settingsMod });
   let unsub = null, timer = null, lastSynced = '';
@@ -1375,15 +1511,15 @@ async function initCloud() {
 function uid() { return now().toString(36) + Math.random().toString(36).slice(2, 7); }
 let toastTimer;
 function toast(msg, undo) {
-  const t = $('toast'); t.textContent = msg;
+  const el = $('toast'); el.textContent = msg;
   if (undo) {
     const b = document.createElement('button');
-    b.textContent = 'Angre';
-    b.addEventListener('click', () => { t.classList.remove('show'); undo(); });
-    t.appendChild(b);
+    b.textContent = t('undo');
+    b.addEventListener('click', () => { el.classList.remove('show'); undo(); });
+    el.appendChild(b);
   }
-  t.classList.add('show');
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), undo ? 5000 : 1800);
+  el.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), undo ? 5000 : 1800);
 }
 function render() {
   if (view === 'timer') renderTimer();
@@ -1404,18 +1540,27 @@ if (urlAction) history.replaceState(null, '', location.pathname);
 async function runUrlAction() {
   await Promise.race([cloud.ready, new Promise(r => setTimeout(r, 8000))]);
   if (urlAction === 'stop') {
-    if (!state.running) { toast('Timeren gikk ikke'); return; }
+    if (!state.running) { toast(t('notRunning')); return; }
     const k = isoDate(state.running.start);
     const e = addEntry({ start: state.running.start, end: now(), note: state.running.note || '', code: isWeekend(k) ? 'X' : '' });
     setRunning(null); save(); render();
-    toast('Stoppet automatisk kl. ' + clock(e.end) + ' · ' + hm(e.end - e.start));
+    toast(t('autoStopped', clock(e.end), hm(e.end - e.start)));
   } else {
-    if (state.running) { toast('Timeren går allerede'); return; }
+    if (state.running) { toast(t('alreadyRunning')); return; }
     setRunning({ start: now(), note: '' }); save(); render();
-    toast('Startet automatisk kl. ' + clock(now()));
+    toast(t('autoStarted', clock(now())));
   }
 }
 
+// Språkbryter: bytter mellom norsk og engelsk og husker valget på denne enheten
+$('lang').addEventListener('click', () => {
+  lang = lang === 'en' ? 'nb' : 'en';
+  try { localStorage.setItem('timelogg.lang', lang); } catch (e) {}
+  applyLang(); fillCodes(); renderCloud(); go(view);
+});
+
+applyLang();
+$('title').textContent = t('title.' + view);
 render();
 initCloud();
 if (urlAction) runUrlAction();
