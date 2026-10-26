@@ -217,6 +217,20 @@
   @media (min-width: 600px) { dialog { margin: auto; max-width: 480px; border-radius: 24px; } }
   dialog::backdrop { background: rgba(19,30,41,.5); }
   .sheet { padding: 20px 20px calc(env(safe-area-inset-bottom) + 20px); }
+  .scope { display: flex; background: var(--warm); border-radius: 12px; padding: 3px; margin-bottom: 14px; }
+  .scope label { flex: 1; }
+  .scope input { position: absolute; opacity: 0; pointer-events: none; }
+  .scope span { display: block; text-align: center; padding: 9px 4px; border-radius: 9px; font-weight: 600; font-size: 14px; color: var(--sub); cursor: pointer; }
+  .scope input:checked + span { background: var(--card); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .scope input:focus-visible + span { outline: 2px solid var(--red); }
+  .ex-list { border: 1px solid var(--line); border-radius: 12px; max-height: 40vh; overflow-y: auto; margin-bottom: 14px; }
+  .ex-list label { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-top: 1px solid var(--line); cursor: pointer; }
+  .ex-list label:first-child { border-top: 0; }
+  .ex-list input { width: 20px; height: 20px; accent-color: var(--red); }
+  .ex-list span { text-transform: capitalize; }
+  #ex-month { text-transform: capitalize; }
+  .btn-save:disabled { opacity: .45; }
+  [hidden] { display: none !important; }
   .sheet h2 { margin: 0 0 16px; font-size: 20px; }
   .field { display: block; margin-bottom: 12px; }
   .field span { display: block; font-size: 13px; font-weight: 600; color: var(--sub); margin-bottom: 4px; }
@@ -437,6 +451,23 @@
       <button type="submit" class="btn-save">Lagre</button>
     </div>
     <button type="button" class="btn-del" id="delete">Slett økt</button>
+  </form>
+</dialog>
+
+<dialog id="export">
+  <form class="sheet" method="dialog">
+    <h2>Eksporter til regneark</h2>
+    <div class="scope">
+      <label><input type="radio" name="ex-scope" value="one" checked> <span>Én måned</span></label>
+      <label><input type="radio" name="ex-scope" value="all"> <span>Alle måneder</span></label>
+      <label><input type="radio" name="ex-scope" value="pick"> <span>Velg måneder</span></label>
+    </div>
+    <label class="field" id="ex-month-wrap"><span>Måned</span><select id="ex-month"></select></label>
+    <div class="ex-list" id="ex-list" hidden></div>
+    <div class="actions">
+      <button type="button" class="btn-cancel" id="ex-cancel">Avbryt</button>
+      <button type="submit" class="btn-save" id="ex-go">Eksporter</button>
+    </div>
   </form>
 </dialog>
 
@@ -1035,16 +1066,60 @@ function download(name, text, type) {
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
+// Eksport til regneark: én måned, alle måneder eller et utvalg. Hver måned får en sumlinje.
+const exportDlg = $('export');
+const shmc = ms => (ms < 0 ? '-' : '+') + hmc(Math.abs(ms)); // +1:30, til regneark
+function exportMonths() { return [...new Set(state.entries.map(e => mKey(e.start)))].sort().reverse(); }
+
 $('export-csv').addEventListener('click', () => {
+  const months = exportMonths();
+  if (!months.length) { toast('Ingen timer å eksportere'); return; }
+  const cur = months.includes(month) ? month : months[0];
+  $('ex-month').innerHTML = months.map(k => `<option value="${k}"${k === cur ? ' selected' : ''}>${esc(mName(k))}</option>`).join('');
+  $('ex-list').innerHTML = months.map(k => `<label><input type="checkbox" value="${k}"${k === cur ? ' checked' : ''}> <span>${esc(mName(k))}</span></label>`).join('');
+  exportDlg.querySelector('input[name=ex-scope][value=one]').checked = true;
+  updateExport();
+  exportDlg.showModal();
+});
+function exportSelection() {
+  const scope = exportDlg.querySelector('input[name=ex-scope]:checked').value;
+  if (scope === 'one') return [$('ex-month').value];
+  if (scope === 'all') return exportMonths();
+  return [...$('ex-list').querySelectorAll('input:checked')].map(i => i.value);
+}
+function updateExport() {
+  const scope = exportDlg.querySelector('input[name=ex-scope]:checked').value;
+  $('ex-month-wrap').hidden = scope !== 'one';
+  $('ex-list').hidden = scope !== 'pick';
+  const n = exportSelection().length;
+  $('ex-go').disabled = !n;
+  $('ex-go').textContent = n ? 'Eksporter ' + plural(n, 'måned', 'måneder') : 'Velg minst én måned';
+}
+exportDlg.addEventListener('change', updateExport);
+$('ex-cancel').addEventListener('click', () => exportDlg.close());
+exportDlg.addEventListener('click', ev => { if (ev.target === exportDlg) exportDlg.close(); });
+
+$('export').addEventListener('submit', ev => {
+  ev.preventDefault();
+  const sel = exportSelection().sort();
+  if (!sel.length) return;
   const rows = [['Dato', 'Fra', 'Til', 'Timer', 'Kode', 'Dagens +/-', 'Notat']];
   const days = byDay(state.entries);
-  [...days.keys()].sort().forEach(k => {
-    const es = days.get(k).sort((a, b) => a.start - b.start), d = dayDelta(k, es);
-    es.forEach((e, i) => rows.push([k, e.allDay ? '' : clock(e.start), e.allDay ? '' : clock(e.end), e.allDay ? '' : hmc(dur(e)),
-      e.code || (isWeekend(k) && !e.allDay ? 'X' : ''), i === es.length - 1 ? shm(d).replace('−', '-') : '', e.note || '']));
+  sel.forEach(mk => {
+    let total = 0, delta = 0;
+    [...days.keys()].filter(k => k.startsWith(mk)).sort().forEach(k => {
+      const es = days.get(k).sort((a, b) => a.start - b.start), d = dayDelta(k, es);
+      total += es.reduce((a, e) => a + dur(e), 0); delta += d;
+      es.forEach((e, i) => rows.push([k, e.allDay ? '' : clock(e.start), e.allDay ? '' : clock(e.end), e.allDay ? '' : hmc(dur(e)),
+        e.code || (isWeekend(k) && !e.allDay ? 'X' : ''), i === es.length - 1 ? shmc(d) : '', e.note || '']));
+    });
+    rows.push(['Sum ' + mName(mk), '', '', hmc(total), '', shmc(delta), '']);
+    rows.push([]);
   });
   const csv = '﻿' + rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(';')).join('\r\n');
-  download('timelogg-' + isoDate(now()) + '.csv', csv, 'text/csv');
+  const name = sel.length === 1 ? sel[0] : sel.length === exportMonths().length ? 'alle' : sel[0] + '_til_' + sel[sel.length - 1];
+  exportDlg.close();
+  download('timelogg-' + name + '.csv', csv, 'text/csv');
 });
 $('export-json').addEventListener('click', () => {
   download('timelogg-backup-' + isoDate(now()) + '.json', JSON.stringify(state, null, 2), 'application/json');

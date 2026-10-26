@@ -18,7 +18,7 @@ En enkel timeregistreringsapp for mobil, laget som en installerbar nettapp (PWA)
   - **S, SM, SB, F, K, V, P, D** – sykdom, ferie, kurs og permisjon: påvirker ikke banken
 - **Månedsoversikt** og fraværsoversikt per år
 - **Google-innlogging** med synkronisering til skyen (Firebase), og alt fungerer også uten nett
-- **Eksport** til regneark (CSV) og sikkerhetskopi til fil
+- **Eksport** til regneark (CSV) for én måned, alle måneder eller et utvalg, med sumlinje per måned, og sikkerhetskopi til fil
 
 Designet følger fargene og typografien i [UiAs grafiske profil](https://www.uia.no/om-uia/designmanual/).
 
