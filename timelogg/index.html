@@ -231,6 +231,32 @@
   #ex-month { text-transform: capitalize; }
   .btn-save:disabled { opacity: .45; }
   [hidden] { display: none !important; }
+
+  /* ---------- Ferie, glemt stopp, egenmelding, automatisering ---------- */
+  .ferie {
+    margin-top: 14px; padding: 14px 16px; border-radius: 16px; background: var(--abs-bg); color: var(--abs);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .ferie .ico { font-size: 26px; line-height: 1; }
+  .ferie b { display: block; font-size: 17px; }
+  .ferie span { font-size: 14px; opacity: .85; }
+  .forgot {
+    margin-top: 14px; padding: 14px 16px; border-radius: 16px; background: var(--red-muted);
+    border: 1.5px solid var(--red); color: var(--text);
+  }
+  .forgot b { display: block; color: var(--red); }
+  .forgot p { margin: 4px 0 10px; font-size: 14px; color: var(--sub); }
+  .forgot button { background: var(--red); color: var(--on-red); font-weight: 700; padding: 10px 16px; border-radius: 20px; }
+  .cal .grid .hol:not(.has) { background: repeating-linear-gradient(135deg, var(--abs-bg) 0 6px, transparent 6px 12px); }
+  .cal .grid .hol:not(.has) i { color: var(--abs); }
+  .sick b.count { font-size: 22px; color: var(--text); }
+  .sick .warn { color: var(--red); font-weight: 600; }
+  .auto code { font-size: 13px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; word-break: break-all; }
+  .auto details { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 10px; }
+  .auto summary { font-weight: 600; color: var(--red); cursor: pointer; }
+  .auto ol { margin: 10px 0 0; padding-left: 20px; color: var(--sub); font-size: 15px; }
+  .auto ol li { margin-bottom: 6px; }
+  .auto details p { margin-top: 10px; }
   .sheet h2 { margin: 0 0 16px; font-size: 20px; }
   .field { display: block; margin-bottom: 12px; }
   .field span { display: block; font-size: 13px; font-weight: 600; color: var(--sub); margin-bottom: 4px; }
@@ -344,6 +370,8 @@
       <div class="time" id="time">0:00:00</div>
       <button class="big" id="toggle">Start</button>
     </div>
+    <div class="forgot" id="forgot" hidden></div>
+    <div class="ferie" id="ferie" hidden></div>
     <div class="stats">
       <div class="stat"><div class="lbl">I dag</div><div class="val" id="s-day">0:00</div></div>
       <div class="stat"><div class="lbl">Denne uka</div><div class="val" id="s-week">0:00</div></div>
@@ -388,6 +416,7 @@
       <div class="stat"><div class="lbl">Egenmeldt i år</div><div class="val" id="ot-s">0</div></div>
     </div>
     <div id="ot-list"></div>
+    <div class="tools" id="sick-box"></div>
     <div class="tools" id="abs-box"></div>
     <div class="tools codes-help">
       <h2>Slik regnes banken (som i arbeidstidsskjemaet)</h2>
@@ -401,6 +430,27 @@
     <div class="tools">
       <h2>Konto og skylagring</h2>
       <div class="account" id="account"></div>
+    </div>
+    <div class="tools">
+      <h2>Automatisk start og stopp</h2>
+      <div class="account auto">
+        <p>Telefonen kan starte og stoppe timeren selv når hun kommer til eller forlater jobben, ved hjelp av en automatisering. Appen må være innlogget med Google både i appen og i nettleseren.</p>
+        <p><b>Stopp:</b> <code>timetracker-01.web.app/?stop</code><br><b>Start:</b> <code>timetracker-01.web.app/?start</code></p>
+        <details>
+          <summary>Slik gjør du det på iPhone</summary>
+          <ol>
+            <li>Åpne appen <b>Snarveier</b> → <b>Automatisering</b> → <b>+</b>.</li>
+            <li>Velg <b>Forlater</b> og søk opp jobben (Gimlekollen, Bergtoras vei 120, Kristiansand). Velg gjerne en liten radius.</li>
+            <li>Velg <b>Kjør umiddelbart</b> og trykk <b>Neste</b>.</li>
+            <li>Legg til handlingen <b>Åpne URL-er</b> med adressen for stopp over.</li>
+            <li>Lag gjerne en til med <b>Ankommer</b> og adressen for start.</li>
+          </ol>
+        </details>
+        <details>
+          <summary>Slik gjør du det på Android</summary>
+          <p>Bruk en automatiseringsapp (for eksempel Tasker eller MacroDroid) med «forlater område» som utløser og «åpne nettadresse» som handling, med adressene over.</p>
+        </details>
+      </div>
     </div>
     <div class="tools">
       <h2>Data</h2>
@@ -539,6 +589,19 @@ const CODES = {
   D:  { label: 'Annet', kind: 'abs', help: 'Påvirker ikke banken.' }
 };
 const XR_HOURS = 10 * H;
+
+// Skoleferier i Kristiansand, fra den interkommunale skoleruta 2026–2027 (helgene rundt er tatt med).
+// Legg inn neste skoleår når kommunen publiserer det. Sommerferiens slutt er foreløpig anslått.
+const SCHOOL_HOLIDAYS = [
+  { name: 'Høstferie', from: '2026-09-26', to: '2026-10-04' },
+  { name: 'Juleferie', from: '2026-12-19', to: '2027-01-04' },
+  { name: 'Vinterferie', from: '2027-02-20', to: '2027-02-28' },
+  { name: 'Påskeferie', from: '2027-03-20', to: '2027-03-30' },
+  { name: 'Sommerferie', from: '2027-06-19', to: '2027-08-15', approx: true }
+];
+const HOLIDAY_ICON = { 'Høstferie': '🍂', 'Juleferie': '🎄', 'Vinterferie': '⛷️', 'Påskeferie': '🐣', 'Sommerferie': '☀️' };
+const holidayOf = k => SCHOOL_HOLIDAYS.find(h => k >= h.from && k <= h.to);
+const FORGOT_AFTER = 10 * H; // varsel om glemt stopp når timeren har gått så lenge, eller siden en tidligere dag
 // Normal arbeidsdag: 6:30 (1. september – 30. april), 5:30 (1. mai – 31. august)
 const normalDay = k => { const m = +k.slice(5, 7); return (m >= 5 && m <= 8 ? 5.5 : 6.5) * H; };
 // Klokka 08:00 på en dato (riktig også på dager med overgang sommertid/vintertid)
@@ -775,7 +838,39 @@ function renderTimer() {
   const today = isoDate(now());
   $('quick-today').innerHTML = presetButtons(today, false);
   $('quick-today').querySelectorAll('[data-preset]').forEach(btn => btn.addEventListener('click', () => addPreset(btn.dataset.preset, today)));
+
+  // Glemt å stoppe? Timeren har gått lenge, eller ble startet en tidligere dag
+  const forgot = run && (now() - run.start > FORGOT_AFTER || isoDate(run.start) !== today);
+  $('forgot').hidden = !forgot;
+  if (forgot) {
+    // Knappen tegnes bare når økten endres, ikke hvert sekund; teksten oppdateres
+    if ($('forgot').dataset.start !== String(run.start)) {
+      $('forgot').innerHTML = '<b>Glemte du å stoppe timeren?</b><p></p><button data-fix>Stopp og rett sluttiden</button>';
+      $('forgot').dataset.start = run.start;
+    }
+    $('forgot').querySelector('p').textContent = `Den ble startet ${dayName(isoDate(run.start))} kl. ${clock(run.start)} og har gått i ${hm(now() - run.start)}.`;
+  }
+
+  // Nedtelling til neste skoleferie
+  const hol = holidayOf(today), next = SCHOOL_HOLIDAYS.find(h => h.from > today);
+  let fh = '';
+  if (hol) {
+    fh = `<span class="ico">${HOLIDAY_ICON[hol.name] || '🌴'}</span><div><b>God ${hol.name.toLowerCase()}!</b><span>${hol.approx ? 'Varer til skolestart i august' : 'Varer til og med ' + esc(dayName(hol.to))}</span></div>`;
+  } else if (next) {
+    const n = Math.round((keyDate(next.from) - keyDate(today)) / DAY);
+    fh = `<span class="ico">${HOLIDAY_ICON[next.name] || '🌴'}</span><div><b>${next.name} om ${plural(n, 'dag', 'dager')}</b><span>Fra ${esc(dayName(next.from))}</span></div>`;
+  }
+  $('ferie').innerHTML = fh;
+  $('ferie').hidden = !fh;
 }
+$('forgot').addEventListener('click', ev => {
+  if (!ev.target.closest('[data-fix]') || !state.running) return;
+  const k = isoDate(state.running.start);
+  const e = addEntry({ start: state.running.start, end: now(), note: state.running.note || '', code: isWeekend(k) ? 'X' : '' });
+  setRunning(null); save(); render();
+  openSheet(e.id);
+  toast('Sett riktig sluttid og trykk Lagre');
+});
 
 // ---------- Logg ----------
 let month = mKey(now());
@@ -849,8 +944,9 @@ function renderCalendar(days) {
     const sum = es ? es.reduce((a, e) => a + dur(e), 0) : 0;
     const codes = es ? dayCodes(k, es) : [];
     const kind = dayKind(codes);
-    const cls = [es ? 'has' : '', kind ? 'k-' + kind : '', k === today ? 'today' : '', k === selDay ? 'sel' : '', k > today ? 'future' : ''].join(' ');
-    html += `<button class="${cls}" data-day="${k}"><b>${d}</b><small>${sum ? hmCal(sum) : ''}</small><i>${codes.join(' ')}</i></button>`;
+    const hol = holidayOf(k);
+    const cls = [es ? 'has' : '', kind ? 'k-' + kind : '', hol ? 'hol' : '', k === today ? 'today' : '', k === selDay ? 'sel' : '', k > today ? 'future' : ''].join(' ');
+    html += `<button class="${cls}" data-day="${k}"${hol ? ` title="${hol.name}"` : ''}><b>${d}</b><small>${sum ? hmCal(sum) : ''}</small><i>${codes.length ? codes.join(' ') : hol ? 'ferie' : ''}</i></button>`;
   }
   html += '</div></div>';
 
@@ -913,6 +1009,27 @@ function renderOvertime() {
       ${chips ? `<div class="chips">${chips}</div>` : ''}</button>`;
   });
   $('ot-list').innerHTML = keys.length ? html + '</div>' : '<div class="empty">Ingen registreringer ennå.</div>';
+
+  // Egenmelding siste 12 måneder. Dager som henger sammen (også over en helg) teller som én gang.
+  const today = isoDate(now());
+  const yearAgo = (() => { const d = keyDate(today); d.setFullYear(d.getFullYear() - 1); return isoDate(d.getTime()); })();
+  const sDays = (b.abs.get('S') || []).filter(k => k > yearAgo && k <= today).sort();
+  const periods = [];
+  sDays.forEach(k => {
+    const last = periods[periods.length - 1];
+    let joined = false;
+    if (last) {
+      const prev = last[last.length - 1], gap = Math.round((keyDate(k) - keyDate(prev)) / DAY);
+      joined = gap === 1 || (gap <= 3 && [...Array(gap - 1)].every((_, i) => isWeekend(isoDate(keyDate(prev).getTime() + (i + 1) * DAY + 2 * H))));
+    }
+    if (joined) last.push(k); else periods.push([k]);
+  });
+  const left = Math.max(0, 4 - periods.length);
+  $('sick-box').innerHTML = `<h2>Egenmelding siste 12 måneder</h2><div class="account sick">
+    <p><b class="count">${plural(sDays.length, 'dag', 'dager')}</b> fordelt på <b>${plural(periods.length, 'gang', 'ganger')}</b></p>
+    ${periods.length ? `<div class="chips" style="margin:0 0 12px">${periods.map(p => `<span class="abs">${esc(shortDay(p[0]))}${p.length > 1 ? '–' + esc(shortDay(p[p.length - 1])) : ''} ${esc(mOnly(p[0]).slice(0, 3))}.</span>`).join('')}</div>` : ''}
+    <p class="${left <= 1 ? 'warn' : ''}">${left ? 'Etter hovedregelen har du ' + plural(left, 'egenmelding', 'egenmeldinger') + ' igjen.' : 'Du har brukt alle fire egenmeldingene etter hovedregelen.'}</p>
+    <p>Hovedregelen er egenmelding inntil 3 dager om gangen, 4 ganger i løpet av 12 måneder. Mange arbeidsgivere har avtale om flere dager, så sjekk hva som gjelder for deg.</p></div>`;
   $('ot-list').querySelectorAll('.mrow').forEach(el => el.addEventListener('click', () => { month = el.dataset.m; go('log'); }));
 
   // Fravær i år, som i arket
@@ -1148,6 +1265,9 @@ $('import-file').addEventListener('change', async ev => {
 
 // ---------- Skylagring med Google-konto (Firebase) ----------
 const cloud = { configured: !!(FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey), user: null, status: 'off', last: 0, push() {} };
+// cloud.ready løses når vi vet om det finnes data i skyen (eller at det ikke er noen innlogging)
+let cloudReady;
+cloud.ready = new Promise(r => { cloudReady = r; });
 const GOOGLE_ICON = '<svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.5z"/></svg>';
 
 function renderCloud() {
@@ -1182,13 +1302,13 @@ function renderAccount() {
 }
 
 async function initCloud() {
-  if (!cloud.configured) { renderCloud(); return; }
+  if (!cloud.configured) { renderCloud(); cloudReady(); return; }
   const base = 'https://www.gstatic.com/firebasejs/10.12.2/';
   let A, AU, FS;
   try {
     [A, AU, FS] = await Promise.all([import(base + 'firebase-app.js'), import(base + 'firebase-auth.js'), import(base + 'firebase-firestore.js')]);
   } catch (e) {
-    cloud.status = 'offline'; renderCloud(); if (view === 'months') renderAccount(); return;
+    cloud.status = 'offline'; renderCloud(); if (view === 'months') renderAccount(); cloudReady(); return;
   }
   const app = A.initializeApp(FIREBASE_CONFIG);
   const auth = AU.getAuth(app);
@@ -1241,9 +1361,11 @@ async function initCloud() {
         const mergedStr = JSON.stringify(pick(state));
         if (mergedStr !== remoteStr) cloud.push();
         else { lastSynced = mergedStr; cloud.status = 'ok'; cloud.last = now(); renderCloud(); if (view === 'months') renderAccount(); }
-      }, () => { cloud.status = 'error'; renderCloud(); });
+        cloudReady();
+      }, () => { cloud.status = 'error'; renderCloud(); cloudReady(); });
     } else {
       cloud.status = 'out';
+      cloudReady();
     }
     renderCloud(); if (view === 'months') renderAccount();
   });
@@ -1273,8 +1395,30 @@ function render() {
 setInterval(() => { if (state.running && !sheet.open) render(); }, 1000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { state = load(); render(); cloud.push(); } });
 
+// ---------- Automatisk start/stopp via nettadresse (?start / ?stop) ----------
+// Brukes av en automatisering på telefonen som åpner adressen når hun kommer til eller forlater jobben.
+// Vi venter til skydata er hentet, så vi stopper den timeren som faktisk går (også om den ble startet i appen).
+const urlParams = new URLSearchParams(location.search);
+const urlAction = urlParams.has('stop') ? 'stop' : urlParams.has('start') ? 'start' : null;
+if (urlAction) history.replaceState(null, '', location.pathname);
+async function runUrlAction() {
+  await Promise.race([cloud.ready, new Promise(r => setTimeout(r, 8000))]);
+  if (urlAction === 'stop') {
+    if (!state.running) { toast('Timeren gikk ikke'); return; }
+    const k = isoDate(state.running.start);
+    const e = addEntry({ start: state.running.start, end: now(), note: state.running.note || '', code: isWeekend(k) ? 'X' : '' });
+    setRunning(null); save(); render();
+    toast('Stoppet automatisk kl. ' + clock(e.end) + ' · ' + hm(e.end - e.start));
+  } else {
+    if (state.running) { toast('Timeren går allerede'); return; }
+    setRunning({ start: now(), note: '' }); save(); render();
+    toast('Startet automatisk kl. ' + clock(now()));
+  }
+}
+
 render();
 initCloud();
+if (urlAction) runUrlAction();
 if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 </body>

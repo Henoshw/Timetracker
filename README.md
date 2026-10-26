@@ -17,6 +17,10 @@ En enkel timeregistreringsapp for mobil, laget som en installerbar nettapp (PWA)
   - **A** – avspasering: trekker en normal arbeidsdag fra banken
   - **S, SM, SB, F, K, V, P, D** – sykdom, ferie, kurs og permisjon: påvirker ikke banken
 - **Månedsoversikt** og fraværsoversikt per år
+- **Nedtelling til neste skoleferie** (skoleruta i Kristiansand), med feriene markert i kalenderen
+- **Egenmeldingsteller** for de siste 12 månedene
+- **Varsel om glemt stopp** når timeren har gått lenge eller siden en tidligere dag
+- **Automatisk start og stopp** via `?start` og `?stop`, for eksempel fra en stedsbasert automatisering i Snarveier på iPhone
 - **Google-innlogging** med synkronisering til skyen (Firebase), og alt fungerer også uten nett
 - **Eksport** til regneark (CSV) for én måned, alle måneder eller et utvalg, med sumlinje per måned, og sikkerhetskopi til fil
 
