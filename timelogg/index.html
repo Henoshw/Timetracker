@@ -602,7 +602,7 @@ const I18N = {
     holEnjoy: n => 'God ' + n.toLowerCase() + '!', holUntil: 'Varer til og med {0}', holUntilSchool: 'Varer til skolestart i august',
     holIn: (n, d) => n + ' om ' + d, holFrom: 'Fra {0}', holShort: 'ferie',
     'preset.helg': 'Helg', 'preset.dag': 'Vanlig arbeidsdag', 'preset.syk': 'Syk – egenmelding', 'preset.avsp': 'Avspasering',
-    presetDagSub: '{0} · −10 min i banken', allDay: 'hele dagen', presetAvspSub: 'A · −{0} fra banken',
+    presetDagSub: '{0} · −{1} i banken', allDay: 'hele dagen', presetAvspSub: 'A · −{0} fra banken',
     saved: 'Lagret', savedDur: 'Lagret: {0}', registered: 'Registrert: {0}', undone: 'Angret', undo: 'Angre', couldNotSave: 'Kunne ikke lagre',
     forgotTitle: 'Glemte du å stoppe timeren?', forgotText: 'Den ble startet {0} kl. {1} og har gått i {2}.', forgotFix: 'Stopp og rett sluttiden',
     forgotToast: 'Sett riktig sluttid og trykk Lagre',
@@ -612,7 +612,7 @@ const I18N = {
     noEntries: 'Ingen registreringer ennå.', sickTitle: 'Egenmelding siste 12 måneder', spreadOver: 'fordelt på',
     sickLeft: 'Etter hovedregelen har du {0} igjen.', sickNone: 'Du har brukt alle fire egenmeldingene etter hovedregelen.',
     sickRule: 'Hovedregelen er egenmelding inntil 3 dager om gangen, 4 ganger i løpet av 12 måneder. Mange arbeidsgivere har avtale om flere dager, så sjekk hva som gjelder for deg.',
-    absence: 'Fravær {0}', helpNormal: 'Vanlig arbeidsdag: timer over eller under normaldagen (6:30, eller 5:30 fra mai til august) gir pluss eller minus.',
+    absence: 'Fravær {0}', helpNormal: 'Vanlig arbeidsdag: timer over eller under normaldagen (6 t 24 min, eller 5 t 24 min fra mai til august) gir pluss eller minus.',
     helpAbs: 'Sykdom, ferie, kurs og permisjon påvirker ikke banken.', monthsEmpty: 'Når du har registrert timer, ser du oversikten per måned her.',
     noCode: 'Ingen kode (vanlig arbeid)', sheetLive: 'Pågående økt', sheetEdit: 'Endre registrering', sheetNew: 'Ny registrering', cancelRun: 'Avbryt økten uten å lagre',
     errDate: 'Fyll inn dato', errStart: 'Fyll inn starttid', errFuture: 'Starttid kan ikke være i fremtiden', errStartEndOrCode: 'Fyll inn start og slutt, eller velg en kode',
@@ -659,7 +659,7 @@ const I18N = {
     holEnjoy: n => 'Enjoy your ' + n.toLowerCase() + '!', holUntil: 'Lasts until {0}', holUntilSchool: 'Lasts until school starts in August',
     holIn: (n, d) => n + ' in ' + d, holFrom: 'From {0}', holShort: 'holiday',
     'preset.helg': 'Weekend', 'preset.dag': 'Normal workday', 'preset.syk': 'Sick – self-certified', 'preset.avsp': 'Time off in lieu',
-    presetDagSub: '{0} · −10 min to the bank', allDay: 'all day', presetAvspSub: 'A · −{0} from the bank',
+    presetDagSub: '{0} · −{1} to the bank', allDay: 'all day', presetAvspSub: 'A · −{0} from the bank',
     saved: 'Saved', savedDur: 'Saved: {0}', registered: 'Added: {0}', undone: 'Undone', undo: 'Undo', couldNotSave: 'Could not save',
     forgotTitle: 'Did you forget to stop the timer?', forgotText: 'It was started {0} at {1} and has been running for {2}.', forgotFix: 'Stop and fix the end time',
     forgotToast: 'Set the correct end time and tap Save',
@@ -669,7 +669,7 @@ const I18N = {
     noEntries: 'No entries yet.', sickTitle: 'Self-certified sick days, last 12 months', spreadOver: 'over',
     sickLeft: 'Under the main rule you have {0} left.', sickNone: 'You have used all four self-certifications under the main rule.',
     sickRule: 'The main rule is self-certification for up to 3 days at a time, 4 times within 12 months. Many employers have agreements allowing more days, so check what applies to you.',
-    absence: 'Absence {0}', helpNormal: 'Normal workday: hours above or below the normal day (6:30, or 5:30 from May to August) count as plus or minus.',
+    absence: 'Absence {0}', helpNormal: 'Normal workday: hours above or below the normal day (6 h 24 min, or 5 h 24 min from May to August) count as plus or minus.',
     helpAbs: 'Sickness, holiday, courses and leave do not affect the bank.', monthsEmpty: 'Once you have recorded hours, you will see a monthly overview here.',
     noCode: 'No code (normal work)', sheetLive: 'Running session', sheetEdit: 'Edit entry', sheetNew: 'New entry', cancelRun: 'Discard the session without saving',
     errDate: 'Enter a date', errStart: 'Enter a start time', errFuture: 'Start time cannot be in the future', errStartEndOrCode: 'Enter start and end, or choose a code',
@@ -733,11 +733,14 @@ const HOLIDAY_ICON = { autumn: '🍂', christmas: '🎄', winter: '⛷️', east
 const holName = h => t('hol.' + h.name);
 const holidayOf = k => SCHOOL_HOLIDAYS.find(h => k >= h.from && k <= h.to);
 const FORGOT_AFTER = 10 * H; // varsel om glemt stopp når timeren har gått så lenge, eller siden en tidligere dag
-// Normal arbeidsdag: 6:30 (1. september – 30. april), 5:30 (1. mai – 31. august)
-const normalDay = k => { const m = +k.slice(5, 7); return (m >= 5 && m <= 8 ? 5.5 : 6.5) * H; };
+// Normaldagen (det banken regner avvik fra). Fra NORMAL_FROM er den 6:24 (5:24 fra mai til august).
+// Dager før det beholder 6:30 / 5:30, slik arbeidstidsskjemaet regnet dem, så saldoen på 21:24 står fast.
+const NORMAL_FROM = '2026-10-28';
+const isSummer = k => { const m = +k.slice(5, 7); return m >= 5 && m <= 8; };
+const normalDay = k => (k >= NORMAL_FROM ? 6 * H + 24 * 60000 : 6.5 * H) - (isSummer(k) ? H : 0);
 // Klokka 08:00 på en dato (riktig også på dager med overgang sommertid/vintertid)
-// Vanlig arbeidsdag registreres 10 minutter kortere enn normaldagen (08:00–14:20), og gir dermed −0:10 i banken
-const workDay = k => normalDay(k) - 10 * 60000;
+// Vanlig arbeidsdag registreres alltid 08:00–14:20 (08:00–13:20 om sommeren)
+const workDay = k => (isSummer(k) ? 5 : 6) * H + 20 * 60000;
 const at8 = k => { const d = new Date(k + 'T00:00'); d.setHours(8, 0, 0, 0); return d.getTime(); };
 
 // ---------- Lagring ----------
@@ -921,7 +924,7 @@ $('fab').addEventListener('click', () => openSheet(null, logMode === 'cal' ? sel
 // Hurtigknapper: registrerer en ferdig økt eller en kode på valgt dato
 const PRESETS = {
   helg: { cls: 'q-plus', sub: () => 'XR · ' + hm(XR_HOURS) },
-  dag:  { cls: '', sub: k => t('presetDagSub', '08:00–' + clock(at8(k) + workDay(k))) },
+  dag:  { cls: '', sub: k => t('presetDagSub', '08:00–' + clock(at8(k) + workDay(k)), hm(normalDay(k) - workDay(k))) },
   syk:  { cls: 'q-abs', sub: () => 'S · ' + t('allDay') },
   avsp: { cls: '', sub: k => t('presetAvspSub', hm(normalDay(k))) }
 };

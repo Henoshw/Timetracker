@@ -7,11 +7,11 @@ En enkel timeregistreringsapp for mobil, laget som en installerbar nettapp (PWA)
 ## Funksjoner
 
 - **Start/stopp-timer** som fortsetter selv om appen lukkes, og som kan justeres i etterkant
-- **Hurtigregistrering:** Helg (XR, 10 t), Vanlig arbeidsdag (08:00–14:20), Syk – egenmelding og Avspasering
+- **Hurtigregistrering:** Helg (XR, 10 t), Vanlig arbeidsdag (08:00–14:20, gir −4 min), Syk – egenmelding og Avspasering
 - **Logg** med liste- og kalendervisning, der timer og koder vises for hver dag
 - **Endre og slette** alle registreringer, også på tidligere datoer
 - **Overtidsbank** som regner pluss og minus etter samme regler som et vanlig arbeidstidsskjema:
-  - Vanlige dager: avvik fra normaldagen (6:30, eller 5:30 fra mai til august)
+  - Vanlige dager: avvik fra normaldagen, 6 t 24 min (5 t 24 min fra mai til august). Før 28.10.2026 gjaldt 6:30 / 5:30, som i arbeidstidsskjemaet
   - **X** – ekstra / helg: alle timene gir pluss (settes automatisk på lørdag og søndag)
   - **XR** – helg: fast +10 timer
   - **A** – avspasering: trekker en normal arbeidsdag fra banken
@@ -23,7 +23,6 @@ En enkel timeregistreringsapp for mobil, laget som en installerbar nettapp (PWA)
 - **Automatisk start og stopp** via `?start` og `?stop`, for eksempel fra en stedsbasert automatisering i Snarveier på iPhone
 - **Google-innlogging** med synkronisering til skyen (Firebase), og alt fungerer også uten nett
 - **Eksport** til regneark (CSV) for én måned, alle måneder eller et utvalg, med sumlinje per måned, og sikkerhetskopi til fil
-
 - **Norsk og engelsk:** bytt språk med knappen øverst til høyre
 
 Designet følger fargene og typografien i [UiAs grafiske profil](https://www.uia.no/om-uia/designmanual/).
